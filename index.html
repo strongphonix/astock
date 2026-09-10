@@ -494,6 +494,7 @@ footer b{color:#c3cdd9}
       <h2>全市场资金与主线分析</h2>
       <span class="hint">实时成交额（沪深分钟K线口径）· 10日涨幅与活跃股行业分布 · 板块资金/涨幅/涨停三榜 · 主线判定</span>
     </div>
+    <div class="morning-flow" id="morningFlow"></div>
     <div class="cap-cards" id="capCards"></div>
     <div class="chart-grid">
       <div class="chart-card"><div class="chart-title">10日涨幅前100 · 行业分布</div><div class="chart" id="chart6" style="height:230px"></div></div>
@@ -503,7 +504,6 @@ footer b{color:#c3cdd9}
     <div class="mainline" id="mainLine"></div>
     <div class="sector-grades" id="sectorGrades"></div>
     <div class="linkage-panel" id="linkagePanel"></div>
-    <div class="morning-flow" id="morningFlow"></div>
     <div class="yzt-deep" id="yztDeep"></div>
     <div class="rotation-track" id="rotationTrack"></div>
     <div class="cross-analysis" id="crossAnalysis"></div>
@@ -2563,6 +2563,8 @@ function calcNewsCatalyst() {
   return { items: items, verifiedTotal: verifiedTotal, totalSectors: totalSectors };
 }
 function renderCap() {
+  /* 早盘盯盘流程（置顶） */
+  renderMorningFlow();
   var ov = S.capOv;
   var cards = [];
   if (ov) {
@@ -2688,8 +2690,6 @@ function renderCap() {
       '<b>口诀</b>：周期定仓位上限，板块定选股方向；主升抓S/A，分歧做低位；退潮只B套利，冰点少试或空仓；环境差强板降档，旧主线退潮不抄。' +
       '</div></details>';
   }
-  /* 早盘盯盘流程 */
-  renderMorningFlow();
   /* 昨日涨停池深度分析 */
   var yd = calcYztDeep();
   if (yd) {
