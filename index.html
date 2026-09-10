@@ -249,6 +249,41 @@ footer b{color:#c3cdd9}
 .sg-cat-policy{background:#f0453a18;color:#f0453a}
 .sg-cat-industry{background:#f5a52418;color:#f5a524}
 .sg-cat-none{background:#64748b18;color:#64748b}
+.yzt-deep{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.yd-mood{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.yd-badge{padding:5px 14px;border-radius:999px;font-size:14px;font-weight:800}
+.yd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.yd-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.yd-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.yd-val{font-size:16px;font-weight:700;color:var(--text)}
+.yd-val.up-txt{color:#f0453a}
+.yd-val.down-txt{color:#10b981}
+.yd-sub{font-size:10.5px;color:var(--muted);margin-top:2px}
+@media(max-width:768px){.yd-grid{grid-template-columns:repeat(2,1fr)}}
+.rotation-track{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.rt-stage{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.rt-badge{padding:5px 14px;border-radius:999px;font-size:14px;font-weight:800}
+.rt-timeline{display:flex;gap:4px;margin:10px 0;flex-wrap:wrap}
+.rt-tnode{flex:1;min-width:80px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;text-align:center}
+.rt-tnode.active{border-color:#f5a524;background:#f5a52418}
+.rt-tnode .t{font-size:11px;font-weight:700;color:var(--text)}
+.rt-tnode .d{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3}
+.rt-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.rt-col{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.rt-col h4{margin:0 0 8px 0;font-size:13px}
+.rt-col.high h4{color:#f0453a}
+.rt-col.low h4{color:#10b981}
+.rt-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--line2);font-size:12px}
+.rt-item:last-child{border-bottom:none}
+.rt-signals{margin-top:10px;display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.rt-sig{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:11.5px}
+.rt-sig .sig-label{color:var(--muted);margin-bottom:3px}
+.rt-sig .sig-val{font-weight:700;font-size:13px}
+.rt-sig.fire{border-color:#f0453a55;background:#f0453a10}
+.rt-sig.fire .sig-val{color:#f0453a}
+.rt-sig.good{border-color:#10b98155;background:#10b98110}
+.rt-sig.good .sig-val{color:#10b981}
+@media(max-width:768px){.rt-cols{grid-template-columns:1fr}.rt-signals{grid-template-columns:1fr}}
 .ml-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ml-badge{padding:5px 14px;border-radius:999px;font-size:14px;font-weight:800}
 .ml-top{font-size:12.5px;color:#c3cdd9;margin-top:8px;line-height:1.8}
@@ -430,6 +465,8 @@ footer b{color:#c3cdd9}
     <div class="cap-row" id="capRow"></div>
     <div class="mainline" id="mainLine"></div>
     <div class="sector-grades" id="sectorGrades"></div>
+    <div class="yzt-deep" id="yztDeep"></div>
+    <div class="rotation-track" id="rotationTrack"></div>
     <div class="cross-analysis" id="crossAnalysis"></div>
     <div class="stock-pick" id="stockPick"></div>
     <div class="lhb-track" id="lhbTrack"></div>
@@ -833,7 +870,7 @@ function fetchTencentQuotes(codes) {
             var p = v.split('~');
             if (p.length > 48) {
               result[p[2]] = {
-                price: parseFloat(p[3]), pre: parseFloat(p[4]), chg: parseFloat(p[32]),
+                price: parseFloat(p[3]), pre: parseFloat(p[4]), open: parseFloat(p[5]), chg: parseFloat(p[32]),
                 limitUp: parseFloat(p[47]), limitDown: parseFloat(p[48])
               };
             }
@@ -1060,6 +1097,215 @@ function classifyYzt() {
   });
   if (r.n) r.avg = r.sum / r.n;
   return r;
+}
+/* 昨日涨停池深度分析：全套短线情绪指标 */
+function calcYztDeep() {
+  var list = [];
+  S.yzt.forEach(function (x) {
+    var q = S.yztQ[x.c];
+    if (!q || !isFinite(q.price) || q.price <= 0) return;
+    var isLimitUp = q.limitUp && q.price >= q.limitUp - 0.001;
+    var isLimitDown = q.limitDown && q.price <= q.limitDown + 0.001;
+    var openPrem = (q.pre && q.open > 0) ? (q.open / q.pre - 1) * 100 : null;
+    list.push({
+      code: x.c, name: x.n, hybk: x.hybk,
+      yLbc: x.lbc || 1, yZbc: x.zbc || 0,
+      chg: q.chg, openPrem: openPrem,
+      isLimitUp: isLimitUp, isLimitDown: isLimitDown,
+      isLowOpen: openPrem != null && openPrem < 0,
+      isLanban: (x.zbc || 0) > 0,
+      isDuanban: (x.lbc || 1) >= 2 && !isLimitUp
+    });
+  });
+  var n = list.length;
+  if (!n) return null;
+  // 基础
+  var limitUp = list.filter(function (x) { return x.isLimitUp; }).length;
+  var limitDown = list.filter(function (x) { return x.isLimitDown; }).length;
+  var up = list.filter(function (x) { return !x.isLimitUp && x.chg > 0; }).length;
+  var down = list.filter(function (x) { return !x.isLimitDown && x.chg < 0; }).length;
+  var flat = n - limitUp - limitDown - up - down;
+  var redRate = (limitUp + up) / n * 100;
+  var avgChg = list.reduce(function (s, x) { return s + x.chg; }, 0) / n;
+  // 中位数
+  var sorted = list.map(function (x) { return x.chg; }).sort(function (a, b) { return a - b; });
+  var median = n % 2 ? sorted[Math.floor(n / 2)] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+  // 晋级率
+  var jinjiRate = limitUp / n * 100;
+  // 大面率
+  var weakMian = list.filter(function (x) { return x.chg <= -5 && x.chg > -7; }).length;
+  var bigMian = list.filter(function (x) { return x.chg <= -7 && x.chg > -10; }).length;
+  var heAnniu = list.filter(function (x) { return x.chg <= -10; }).length;
+  var bigMianRate = (bigMian + heAnniu) / n * 100;
+  var totalMianRate = (weakMian + bigMian + heAnniu) / n * 100;
+  // 低开率 / 平均开盘溢价
+  var withOpen = list.filter(function (x) { return x.openPrem != null; });
+  var lowOpenRate = withOpen.length ? list.filter(function (x) { return x.isLowOpen; }).length / withOpen.length * 100 : null;
+  var avgOpenPrem = withOpen.length ? withOpen.reduce(function (s, x) { return s + x.openPrem; }, 0) / withOpen.length : null;
+  // 烂板次日溢价
+  var lanban = list.filter(function (x) { return x.isLanban; });
+  var lanbanAvg = lanban.length ? lanban.reduce(function (s, x) { return s + x.chg; }, 0) / lanban.length : null;
+  var lanbanCount = lanban.length;
+  // 断板股表现
+  var duanban = list.filter(function (x) { return x.isDuanban; });
+  var duanbanAvg = duanban.length ? duanban.reduce(function (s, x) { return s + x.chg; }, 0) / duanban.length : null;
+  var duanbanBigMian = duanban.filter(function (x) { return x.chg <= -7; }).length;
+  var duanbanCount = duanban.length;
+  // 大盘对比
+  var idxChg = null;
+  if (S.capOv && S.capOv.sh) idxChg = S.capOv.sh.chg;
+  var vsIdx = (idxChg != null && avgChg != null) ? avgChg - idxChg : null;
+  // 综合情绪判定
+  var mood, moodColor, moodAction;
+  if (bigMianRate > 30 || (avgChg < 0 && median < -2) || limitDown >= 3) {
+    mood = '冰点/退潮'; moodColor = '#64748b';
+    moodAction = '空仓等待拐点，仅极小仓试新题材首板；板块评级整体降一档。';
+  } else if (bigMianRate > 20 || median < 0 || (avgOpenPrem != null && avgOpenPrem < 0)) {
+    mood = '退潮/分歧'; moodColor = '#10b981';
+    moodAction = '只做B级活口轻仓套利，不接力连板，次日早盘兑现；板块评级降一档。';
+  } else if (avgChg > 2 && median > 0 && bigMianRate < 10 && jinjiRate > 40) {
+    mood = '主升/高潮'; moodColor = '#f0453a';
+    moodAction = '可重仓主线，允许龙头接力、分歧加仓；S/A级板块积极参与。';
+  } else {
+    mood = '分歧/修复'; moodColor = '#f5a524';
+    moodAction = '中仓参与主线，低吸+质量首板为主，谨慎接力高位。';
+  }
+  return {
+    n: n, limitUp: limitUp, limitDown: limitDown, up: up, down: down, flat: flat,
+    redRate: redRate, avgChg: avgChg, median: median, jinjiRate: jinjiRate,
+    weakMian: weakMian, bigMian: bigMian, heAnniu: heAnniu,
+    bigMianRate: bigMianRate, totalMianRate: totalMianRate,
+    lowOpenRate: lowOpenRate, avgOpenPrem: avgOpenPrem,
+    lanbanAvg: lanbanAvg, lanbanCount: lanbanCount,
+    duanbanAvg: duanbanAvg, duanbanCount: duanbanCount, duanbanBigMian: duanbanBigMian,
+    idxChg: idxChg, vsIdx: vsIdx,
+    mood: mood, moodColor: moodColor, moodAction: moodAction,
+    detail: list
+  };
+}
+/* 板块高低切/资金轮动跟踪 */
+function calcRotation() {
+  var secDegraded = !(S.secUp || []).length && !(S.secDn || []).length;
+  var secAll = secDegraded ? deriveSectors() : (S.secUp || []).concat(S.secDn || []);
+  if (!secAll.length && !S.zt.length) return null;
+  // 构建板块数据
+  var sec = {};
+  secAll.forEach(function (x) {
+    if (x && x.f14 && !sec[x.f14]) sec[x.f14] = { name: x.f14, pct: x.f3, fund: x.f62, upCnt: x.f104, dnCnt: x.f105, zt: 0, zb: 0 };
+  });
+  var ztBy = {}, zbBy = {};
+  S.zt.forEach(function (x) {
+    if (!x.hybk) return;
+    ztBy[x.hybk] = (ztBy[x.hybk] || 0) + 1;
+    if (!sec[x.hybk]) sec[x.hybk] = { name: x.hybk, pct: null, fund: null, upCnt: null, dnCnt: null, zt: 0, zb: 0 };
+    sec[x.hybk].zt++;
+  });
+  S.zb.forEach(function (x) {
+    if (!x.hybk) return;
+    zbBy[x.hybk] = (zbBy[x.hybk] || 0) + 1;
+    if (!sec[x.hybk]) sec[x.hybk] = { name: x.hybk, pct: null, fund: null, upCnt: null, dnCnt: null, zt: 0, zb: 0 };
+    sec[x.hybk].zb++;
+  });
+  // 读取昨日缓存（用于资金换血对比）
+  var yestSec = null;
+  try {
+    var y = new Date(); y.setDate(y.getDate() - 1);
+    var yk = 'astock_sec_' + fmtDate(y);
+    var cached = localStorage.getItem(yk);
+    if (cached) yestSec = JSON.parse(cached);
+  } catch (e) {}
+  // 缓存今日数据（收盘后或每次刷新都存，key用今日日期）
+  try {
+    var tk = 'astock_sec_' + fmtDate(new Date());
+    var toCache = {};
+    Object.keys(sec).forEach(function (k) {
+      var s = sec[k];
+      toCache[k] = { pct: s.pct, fund: s.fund, zt: s.zt, zb: s.zb };
+    });
+    localStorage.setItem(tk, JSON.stringify(toCache));
+  } catch (e) {}
+  // 高位板块：涨停数前5 或 涨幅前5
+  var byZt = Object.keys(sec).map(function (k) { return sec[k]; })
+    .sort(function (a, b) { return b.zt - a.zt; });
+  var highSet = {};
+  byZt.slice(0, 5).forEach(function (s) { if (s.zt > 0) highSet[s.name] = true; });
+  (S.secUp || []).slice(0, 5).forEach(function (s) { highSet[s.f14] = true; });
+  // 低位板块：涨停数≥3 且不在高位列表，或涨停数≥2且有新催化
+  var lowSecs = Object.keys(sec).map(function (k) { return sec[k]; })
+    .filter(function (s) { return !highSet[s.name] && s.zt >= 2; })
+    .sort(function (a, b) { return b.zt - a.zt; });
+  var highSecs = byZt.slice(0, 5).filter(function (s) { return s.zt > 0; });
+  // 资金换血信号
+  var highOutflow = 0, highInflow = 0, lowInflow = 0, lowOutflow = 0;
+  highSecs.forEach(function (s) {
+    if (s.fund != null) { if (s.fund < 0) highOutflow++; else highInflow++; }
+  });
+  lowSecs.forEach(function (s) {
+    if (s.fund != null) { if (s.fund > 0) lowInflow++; else lowOutflow++; }
+  });
+  var fundSwitch = !secDegraded && highOutflow > highInflow && lowInflow > lowOutflow;
+  // 炸板率剪刀差
+  var highZbRate = 0, highTotal = 0;
+  highSecs.forEach(function (s) { highTotal += s.zt + s.zb; highZbRate += s.zb; });
+  var highZB = highTotal > 0 ? highZbRate / highTotal * 100 : 0;
+  var lowZbRate = 0, lowTotal = 0;
+  lowSecs.forEach(function (s) { lowTotal += s.zt + s.zb; lowZbRate += s.zb; });
+  var lowZB = lowTotal > 0 ? lowZbRate / lowTotal * 100 : 0;
+  var zbScissors = highZB > 35 && lowZB < highZB;
+  // 昨日对比（资金换血）
+  var yestCompare = null;
+  if (yestSec) {
+    var yestHigh = Object.keys(yestSec).sort(function (a, b) { return (yestSec[b].zt || 0) - (yestSec[a].zt || 0); }).slice(0, 5);
+    var yestHighOut = yestHigh.filter(function (k) {
+      return sec[k] && sec[k].fund != null && sec[k].fund < 0;
+    }).length;
+    yestCompare = { yestHighOut: yestHighOut, yestHighTotal: yestHigh.length };
+  }
+  // 四阶段判定
+  var stage, stageColor, stageDesc, action;
+  var lowZtTotal = lowSecs.reduce(function (s, x) { return s + x.zt; }, 0);
+  var highZtTotal = highSecs.reduce(function (s, x) { return s + x.zt; }, 0);
+  if (lowZtTotal >= 8 && lowSecs.length >= 2 && (fundSwitch || zbScissors)) {
+    stage = '高潮期（新主线确立）'; stageColor = '#f0453a';
+    stageDesc = '低位板块批量涨停，资金/情绪信号确认切换，新主线三要素齐备';
+    action = '按S/A级主线操作，聚焦新主线龙头与中军，分歧低吸';
+  } else if (lowZtTotal >= 5 && lowSecs.length >= 2 && (fundSwitch || zbScissors || highZB > 30)) {
+    stage = '确认期（切换进行中）'; stageColor = '#f5a524';
+    stageDesc = '低位板块批量启动，高位退潮信号出现，切换正在确认';
+    action = '可轻仓参与低位首板/卡位龙头，回避高位接力，连续2日验证后加仓';
+  } else if (lowZtTotal >= 2 && lowZtTotal < 5) {
+    stage = '萌芽期（试探异动）'; stageColor = '#38bdf8';
+    stageDesc = '低位板块零星异动，高位仍强，资金尚未大规模切换';
+    action = '只观察不追，跟踪低位板块是否连续放量、涨停数是否扩散';
+  } else {
+    stage = '末期/混沌期（反复切换）'; stageColor = '#64748b';
+    stageDesc = '高低切反复、无持续方向，或高位仍强无切换迹象';
+    action = '空仓或轻仓，不追单日异动，等待明确方向';
+  }
+  // 当前时间节点
+  var now = new Date();
+  var hh = now.getHours(), mm = now.getMinutes();
+  var curMin = hh * 60 + mm;
+  var timeNodes = [
+    { t: '9:25', label: '竞价', desc: '高位低开+低位放量高开=隔夜已切换', start: 9 * 60 + 15, end: 9 * 60 + 30 },
+    { t: '9:30-35', label: '开盘', desc: '高位龙头无人接+低位卡位首板', start: 9 * 60 + 30, end: 9 * 60 + 40 },
+    { t: '10:00-30', label: '第一窗口', desc: '高位炸板潮 vs 低位封板率升', start: 10 * 60, end: 10 * 60 + 35 },
+    { t: '13:00-30', label: '午后', desc: '高位兑现跳水，新题材异动', start: 13 * 60, end: 13 * 60 + 35 },
+    { t: '14:00-30', label: '尾盘', desc: '低位尾盘抢筹=次日方向预演', start: 14 * 60, end: 14 * 60 + 35 },
+    { t: '15:00', label: '收盘', desc: '资金净流入榜换血，新板块登顶', start: 15 * 60, end: 15 * 60 + 5 }
+  ];
+  var activeNode = null;
+  timeNodes.forEach(function (n) { if (curMin >= n.start && curMin <= n.end) activeNode = n; });
+  return {
+    highSecs: highSecs, lowSecs: lowSecs,
+    fundSwitch: fundSwitch, zbScissors: zbScissors,
+    highZB: highZB, lowZB: lowZB,
+    highOutflow: highOutflow, highInflow: highInflow, lowInflow: lowInflow,
+    stage: stage, stageColor: stageColor, stageDesc: stageDesc, action: action,
+    timeNodes: timeNodes, activeNode: activeNode,
+    secDegraded: secDegraded, yestCompare: yestCompare,
+    lowZtTotal: lowZtTotal, highZtTotal: highZtTotal
+  };
 }
 
 /* ================= 页签配置 ================= */
@@ -2090,6 +2336,79 @@ function renderCap() {
   } else {
     $('sectorGrades').innerHTML = '<div class="sp-head"><span class="sp-title">板块五级分级（S/A/B/C/D）</span></div>' +
       '<div class="sp-logic" style="color:var(--muted)">板块数据暂不可用，自动重试中…</div>';
+  }
+  /* 昨日涨停池深度分析 */
+  var yd = calcYztDeep();
+  if (yd) {
+    function ydCard(label, val, sub, cls) {
+      return '<div class="yd-card"><div class="yd-label">' + label + '</div>' +
+        '<div class="yd-val ' + (cls || '') + '">' + val + '</div>' +
+        (sub ? '<div class="yd-sub">' + sub + '</div>' : '') + '</div>';
+    }
+    function pctFmt(v, dec) { if (v == null) return '—'; return (v >= 0 ? '+' : '') + v.toFixed(dec || 1) + '%'; }
+    var mianDetail = '弱面(-5~-7%)' + yd.weakMian + '只 · 大面(-7~-10%)' + yd.bigMian + '只 · 核按钮(≤-10%)' + yd.heAnniu + '只';
+    var cards =
+      ydCard('晋级率', yd.jinjiRate.toFixed(1) + '%', '今日连板 ' + yd.limitUp + '/' + yd.n, yd.jinjiRate >= 40 ? 'up-txt' : (yd.jinjiRate < 25 ? 'down-txt' : '')) +
+      ydCard('平均涨幅', pctFmt(yd.avgChg), '中位数 ' + pctFmt(yd.median), yd.avgChg >= 2 ? 'up-txt' : (yd.avgChg < 0 ? 'down-txt' : '')) +
+      ydCard('红盘率', yd.redRate.toFixed(0) + '%', '涨' + (yd.limitUp + yd.up) + '/跌' + (yd.limitDown + yd.down) + '/平' + yd.flat, yd.redRate >= 60 ? 'up-txt' : (yd.redRate < 40 ? 'down-txt' : '')) +
+      ydCard('大面率', yd.bigMianRate.toFixed(1) + '%', mianDetail, yd.bigMianRate >= 20 ? 'down-txt' : (yd.bigMianRate < 10 ? 'up-txt' : '')) +
+      ydCard('平均开盘溢价', yd.avgOpenPrem != null ? pctFmt(yd.avgOpenPrem, 2) : '—', '低开率 ' + (yd.lowOpenRate != null ? yd.lowOpenRate.toFixed(0) + '%' : '—'), yd.avgOpenPrem != null && yd.avgOpenPrem >= 1.5 ? 'up-txt' : (yd.avgOpenPrem != null && yd.avgOpenPrem < 0 ? 'down-txt' : '')) +
+      ydCard('烂板次日溢价', yd.lanbanAvg != null ? pctFmt(yd.lanbanAvg) : '—', '烂板 ' + yd.lanbanCount + '只', yd.lanbanAvg != null && yd.lanbanAvg >= 0 ? 'up-txt' : 'down-txt') +
+      ydCard('断板股表现', yd.duanbanAvg != null ? pctFmt(yd.duanbanAvg) : '—', '断板 ' + yd.duanbanCount + '只 · 大面' + yd.duanbanBigMian + '只', yd.duanbanAvg != null && yd.duanbanAvg >= -3 ? 'up-txt' : 'down-txt') +
+      ydCard('昨涨停vs大盘', yd.vsIdx != null ? pctFmt(yd.vsIdx) : '—', '大盘 ' + (yd.idxChg != null ? pctFmt(yd.idxChg) : '—'), yd.vsIdx != null && yd.vsIdx >= 0 ? 'up-txt' : 'down-txt');
+    $('yztDeep').innerHTML =
+      '<div class="yd-mood"><span class="yd-badge" style="background:' + yd.moodColor + '22;color:' + yd.moodColor + ';border:1px solid ' + yd.moodColor + '55">昨涨停情绪：' + yd.mood + '</span>' +
+      '<span class="hint">昨日涨停 ' + yd.n + ' 只 · 今日跌停 ' + yd.limitDown + ' 只</span></div>' +
+      '<div class="yd-grid">' + cards + '</div>' +
+      '<div style="margin-top:10px;font-size:12px;color:#c3cdd9;line-height:1.8"><b>操作建议</b>：' + yd.moodAction + '</div>' +
+      '<details class="mood-logic"><summary>查看指标说明与阈值</summary><div class="sp-logic">' +
+      '<b>1. 晋级率</b>：昨日涨停今日继续连板比例。≥40%接力意愿强；<25%高位不敢上。<br>' +
+      '<b>2. 平均涨幅+中位数</b>：平均涨幅看整体溢价，中位数看大多数票真实收益（消除妖股失真）。平均>2%且中位数>0 = 生态健康。<br>' +
+      '<b>3. 大面率</b>（核心风险）：今日跌幅≤-7%占比。<10%容错高；>20%亏钱效应明显；>30%冰点，停止高位接力。<br>' +
+      '<b>4. 开盘溢价</b>：9:25竞价平均涨跌幅，隔夜资金真实投票。>1.5%偏强；<0集体低开=抢跑退潮。<b>联动规则</b>：竞价溢价差，板块评级降一档。<br>' +
+      '<b>5. 烂板次日溢价</b>：昨日炸板回封股今日表现。烂板有溢价=情绪强；烂板闷杀=资金挑剔板质。<br>' +
+      '<b>6. 断板股表现</b>：昨日连板今日断板股平均涨幅。断板不A杀=分歧良性；断板直接大跌=严禁高位接力。<br>' +
+      '<b>组合判断</b>：主升=平均>2%+中位>0+大面<10%+晋级上行；退潮=中位<0+大面抬升+低开率升；冰点=平均负+大面>30%+大量跌停。' +
+      '</div></details>';
+  } else {
+    $('yztDeep').innerHTML = '<div class="sp-head"><span class="sp-title">昨日涨停池深度分析</span></div>' +
+      '<div class="sp-logic" style="color:var(--muted)">昨日涨停行情数据获取中…</div>';
+  }
+  /* 板块高低切/资金轮动跟踪 */
+  var rt = calcRotation();
+  if (rt) {
+    function rtSecItem(s, isHigh) {
+      var fundTxt = s.fund != null ? '<span class="' + (s.fund >= 0 ? 'up-txt' : 'down-txt') + '">' + (s.fund >= 0 ? '+' : '') + (s.fund / 1e8).toFixed(1) + '亿</span>' : '<span style="color:var(--muted)">—</span>';
+      var pctTxt = s.pct != null ? '<span class="' + (s.pct >= 0 ? 'up-txt' : 'down-txt') + '">' + (s.pct >= 0 ? '+' : '') + s.pct.toFixed(2) + '%</span>' : '<span style="color:var(--muted)">—</span>';
+      return '<div class="rt-item"><span><b>' + esc(s.name) + '</b> · ' + s.zt + '涨停' + (s.zb ? ' · ' + s.zb + '炸板' : '') + '</span><span>' + pctTxt + ' ' + fundTxt + '</span></div>';
+    }
+    var highHtml = rt.highSecs.length ? rt.highSecs.map(function (s) { return rtSecItem(s, true); }).join('') : '<div style="color:var(--muted);font-size:12px">暂无数据</div>';
+    var lowHtml = rt.lowSecs.length ? rt.lowSecs.slice(0, 6).map(function (s) { return rtSecItem(s, false); }).join('') : '<div style="color:var(--muted);font-size:12px">暂无低位新启动板块</div>';
+    var tnodeHtml = rt.timeNodes.map(function (n) {
+      return '<div class="rt-tnode' + (rt.activeNode && rt.activeNode.t === n.t ? ' active' : '') + '"><div class="t">' + n.t + '</div><div class="d">' + n.label + '</div></div>';
+    }).join('');
+    $('rotationTrack').innerHTML =
+      '<div class="rt-stage"><span class="rt-badge" style="background:' + rt.stageColor + '22;color:' + rt.stageColor + ';border:1px solid ' + rt.stageColor + '55">轮动阶段：' + rt.stage + '</span>' +
+      '<span class="hint">' + rt.stageDesc + (rt.secDegraded ? ' · 降级模式' : '') + '</span></div>' +
+      '<div class="rt-timeline">' + tnodeHtml + '</div>' +
+      (rt.activeNode ? '<div style="font-size:12px;color:#f5a524;margin-bottom:8px">当前观察窗口：<b>' + rt.activeNode.t + ' ' + rt.activeNode.label + '</b> — ' + rt.activeNode.desc + '</div>' : '') +
+      '<div class="rt-cols">' +
+      '<div class="rt-col high"><h4>高位板块（资金流出风险）</h4>' + highHtml + '</div>' +
+      '<div class="rt-col low"><h4>低位板块（新启动/承接方向）</h4>' + lowHtml + '</div>' +
+      '</div>' +
+      '<div class="rt-signals">' +
+      '<div class="rt-sig ' + (rt.fundSwitch ? 'fire' : '') + '"><div class="sig-label">资金换血</div><div class="sig-val">' + (rt.fundSwitch ? '确认切换' : '未确认') + '</div><div style="font-size:10.5px;color:var(--muted);margin-top:2px">高位净流出' + rt.highOutflow + '/' + (rt.highOutflow + rt.highInflow) + ' · 低位净流入' + rt.lowInflow + '/' + rt.lowSecs.length + '</div></div>' +
+      '<div class="rt-sig ' + (rt.zbScissors ? 'fire' : '') + '"><div class="sig-label">炸板率剪刀差</div><div class="sig-val">' + (rt.zbScissors ? '确认切换' : '未确认') + '</div><div style="font-size:10.5px;color:var(--muted);margin-top:2px">高位炸板率' + rt.highZB.toFixed(0) + '% · 低位' + rt.lowZB.toFixed(0) + '%</div></div>' +
+      '<div class="rt-sig good"><div class="sig-label">低位涨停数</div><div class="sig-val">' + rt.lowZtTotal + ' 家</div><div style="font-size:10.5px;color:var(--muted);margin-top:2px">≥5家=确认期 · ≥8家=高潮期</div></div>' +
+      '<div class="rt-sig"><div class="sig-label">高位涨停数</div><div class="sig-val">' + rt.highZtTotal + ' 家</div><div style="font-size:10.5px;color:var(--muted);margin-top:2px">高位萎缩+低位扩散=切换</div></div>' +
+      '</div>' +
+      '<div style="margin-top:10px;font-size:12px;color:#c3cdd9;line-height:1.8"><b>操作建议</b>：' + rt.action + '</div>' +
+      '<details class="mood-logic"><summary>查看高低切方法论</summary><div class="sp-logic">' +
+      '<b>两种高低切</b>：①板块内高低切=主线内部龙头切低位补涨；②板块间高低切=资金从A板块撤出流入B板块（日常盯盘核心）。<br>' +
+      '<b>确认标准（连续2日）</b>：高位资金连续净流出+涨停减少+炸板率升高；低位连续放量+涨停≥5家+新催化；低位涨停数与资金流入＞高位 → 三者同时满足=确认。<br>' +
+      '<b>三大误区</b>：①只盯高标炸板（炸板+低位无响应=只是退潮，不是切换）；②把价格低当低切（核心是资金行为+催化）；③单日异动就追（必须连续2日验证）。<br>' +
+      '<b>四阶段</b>：萌芽期（零星异动·只观察）→ 确认期（批量涨停·轻仓参与）→ 高潮期（成新主线·按S/A操作）→ 末期（反复切换·空仓轻仓）。' +
+      '</div></details>';
   }
   var cross = calcCross();
   if (cross) {
