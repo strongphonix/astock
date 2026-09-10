@@ -249,6 +249,25 @@ footer b{color:#c3cdd9}
 .sg-cat-policy{background:#f0453a18;color:#f0453a}
 .sg-cat-industry{background:#f5a52418;color:#f5a524}
 .sg-cat-none{background:#64748b18;color:#64748b}
+.linkage-panel{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.lk-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.lk-badge{padding:5px 14px;border-radius:999px;font-size:14px;font-weight:800}
+.lk-position{font-size:12px;color:var(--muted)}
+.lk-matrix{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0}
+.lk-phase{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center}
+.lk-phase.active{border-width:2px}
+.lk-phase .pname{font-size:12px;font-weight:700}
+.lk-phase .ppos{font-size:10px;color:var(--muted);margin-top:2px}
+.lk-phase .p仓{font-size:11px;margin-top:4px;font-weight:600}
+.lk-rules{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:10px}
+.lk-rule-row{display:flex;gap:8px;padding:4px 0;font-size:12px;border-bottom:1px solid var(--line2)}
+.lk-rule-row:last-child{border-bottom:none}
+.lk-rule-row .rk{color:var(--muted);min-width:70px;flex-shrink:0}
+.lk-allowed{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.lk-grade-chip{padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700}
+.lk-grade-chip.allowed{opacity:1}
+.lk-grade-chip.banned{opacity:0.3;text-decoration:line-through}
+@media(max-width:768px){.lk-matrix{grid-template-columns:repeat(3,1fr)}}
 .yzt-deep{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .yd-mood{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .yd-badge{padding:5px 14px;border-radius:999px;font-size:14px;font-weight:800}
@@ -465,6 +484,7 @@ footer b{color:#c3cdd9}
     <div class="cap-row" id="capRow"></div>
     <div class="mainline" id="mainLine"></div>
     <div class="sector-grades" id="sectorGrades"></div>
+    <div class="linkage-panel" id="linkagePanel"></div>
     <div class="yzt-deep" id="yztDeep"></div>
     <div class="rotation-track" id="rotationTrack"></div>
     <div class="cross-analysis" id="crossAnalysis"></div>
@@ -1994,6 +2014,100 @@ function calcSectorGrades() {
   var bCount = shown.filter(function (r) { return r.grade === 'B'; }).length;
   return { rows: shown, degraded: secDegraded, sCount: sCount, aCount: aCount, bCount: bCount };
 }
+/* 情绪周期 × 板块分级 联动体系 */
+function calcLinkage() {
+  var emo = calcEmotion();
+  var yd = calcYztDeep();
+  var sg = calcSectorGrades();
+  var idx = emo.idx || 50;
+  // 综合判断五周期：冰点/修复/主升/分歧/退潮
+  // 结合情绪指数 + 昨涨停大面率 + 中位数 + 晋级率
+  var bigMian = yd ? yd.bigMianRate : null;
+  var median = yd ? yd.median : null;
+  var jinji = yd ? yd.jinjiRate : null;
+  var avgChg = yd ? yd.avgChg : null;
+  // 判断趋势（最近3轮情绪指数变化）
+  var trend = 'flat';
+  if (S.history && S.history.length >= 3) {
+    var recent = S.history.slice(-3);
+    if (recent[2].idx > recent[0].idx + 5) trend = 'up';
+    else if (recent[2].idx < recent[0].idx - 5) trend = 'down';
+  }
+  var phase, phaseColor, posLimit, allowedGrades, bannedGrades, logic, action;
+  // 冰点：idx<30 或 (大面率>30% 且 中位数<0)
+  if (idx < 30 || (bigMian != null && bigMian > 30) || (yd && yd.limitDown >= 3)) {
+    phase = '冰点期'; phaseColor = '#64748b';
+    posLimit = '0~5%';
+    allowedGrades = ['B']; bannedGrades = ['S', 'A', 'C', 'D'];
+    logic = '大面率' + (bigMian != null ? bigMian.toFixed(0) + '%' : '—') + '、中位数' + (median != null ? median.toFixed(1) + '%' : '—') + '，全市场风险偏好极低，无持续主线。';
+    action = '极小仓试错B级活口低吸/新方向首板，禁止连板接力，不追高。';
+  }
+  // 修复：idx 30-50 且趋势向上（从冰点回升），或大面率回落+中位数转正
+  else if (idx >= 30 && idx < 50 && (trend === 'up' || (median != null && median > 0 && bigMian != null && bigMian < 20))) {
+    phase = '修复期'; phaseColor = '#38bdf8';
+    posLimit = '10~20%';
+    allowedGrades = ['B']; bannedGrades = ['S', 'A', 'C', 'D'];
+    logic = '情绪从冰点回升（idx=' + idx + '），大面率回落，资金开始试探新板块。B级活口是未来S/A主线的候选池。';
+    action = 'B级板块低吸、优质首板为主；跟踪B级是否连续2日晋级；谨慎接力高位连板。';
+  }
+  // 主升：idx 50-70 且 大面率<10% 且 中位数>0 且 晋级率高
+  else if (idx >= 50 && idx < 70 && (bigMian == null || bigMian < 15) && (median == null || median > 0)) {
+    phase = '主升期'; phaseColor = '#f0453a';
+    posLimit = '40~70%';
+    allowedGrades = ['S', 'A', 'B']; bannedGrades = ['C', 'D'];
+    logic = '情绪最强窗口（idx=' + idx + '），大面率' + (bigMian != null ? bigMian.toFixed(0) + '%' : '—') + '、晋级率' + (jinji != null ? jinji.toFixed(0) + '%' : '—') + '，资金抱团主线，赚钱效应扩散。';
+    action = 'S/A级主线重仓（低吸/打板/龙头接力，分歧加仓）；B级仅小仓位短线套利；C/D放弃。';
+  }
+  // 分歧：idx 70-85 或 (高标炸板但大面率未飙升，断板震荡不A杀)
+  else if ((idx >= 70 && idx < 85) || (idx >= 50 && trend === 'down' && (bigMian == null || bigMian < 20))) {
+    phase = '分歧期'; phaseColor = '#f5a524';
+    posLimit = '20~40%';
+    allowedGrades = ['A', 'B']; bannedGrades = ['S', 'C', 'D'];
+    logic = '主升后阶段性分歧（idx=' + idx + '），高标炸板但大面率未飙升，主线中军未崩盘。S级主线降级为A级处理，做板块内高低切。';
+    action = '主线（降级A）低位补涨、中军低吸；禁止高位龙头接力；B级仅极小仓试卡位切换。';
+  }
+  // 退潮：idx>85后回落 或 大面率持续走高+中位数持续负+断板A杀
+  else {
+    phase = '退潮期'; phaseColor = '#10b981';
+    posLimit = '0~10%';
+    allowedGrades = ['B']; bannedGrades = ['S', 'A', 'C', 'D'];
+    logic = '风险偏好持续下行（idx=' + idx + '），' + (bigMian != null ? '大面率' + bigMian.toFixed(0) + '%、' : '') + (median != null ? '中位数' + median.toFixed(1) + '%、' : '') + '旧主线逻辑兑现证伪。';
+    action = '仅B级活口尾盘低吸，次日早盘无条件兑现；禁止任何连板接力，禁止抄底D级旧主线。';
+  }
+  // 假修复检测：号称修复但全市场最高只有C级
+  var fakeRepair = false;
+  if (phase === '修复期' && sg && sg.rows.length) {
+    var maxGrade = sg.rows[0].grade;
+    if (maxGrade === 'C' || maxGrade === 'D') {
+      fakeRepair = true;
+      logic += ' <b style="color:#f0453a">⚠ 假修复预警</b>：指数修复但题材最高仅' + maxGrade + '级，无B级及以上板块，题材情绪未修复，不应提高仓位。';
+      posLimit = '0~5%';
+    }
+  }
+  // 退潮期强板降档：S/A直接降为B级处理
+  var downgrade = false;
+  if ((phase === '退潮期' || phase === '冰点期') && sg && sg.rows.length) {
+    var hasSA = sg.rows.some(function (r) { return r.grade === 'S' || r.grade === 'A'; });
+    if (hasSA) {
+      downgrade = true;
+      logic += ' <b style="color:#f5a524">⚠ 强板降档</b>：' + phase + '环境下S/A级板块按B级处理，压缩仓位，不能用主升打法。';
+    }
+  }
+  // 符合条件的板块
+  var allowedSecs = [];
+  if (sg && sg.rows.length) {
+    allowedSecs = sg.rows.filter(function (r) {
+      return allowedGrades.indexOf(r.grade) >= 0;
+    }).slice(0, 8);
+  }
+  return {
+    phase: phase, phaseColor: phaseColor, idx: idx,
+    posLimit: posLimit, allowedGrades: allowedGrades, bannedGrades: bannedGrades,
+    logic: logic, action: action, fakeRepair: fakeRepair, downgrade: downgrade,
+    allowedSecs: allowedSecs, trend: trend,
+    bigMian: bigMian, median: median, jinji: jinji, avgChg: avgChg
+  };
+}
 /* 10日涨幅前100 × 成交额>10亿 行业交叉分析 */
 function calcCross() {
   var tenList = (S.tenGainMap || []).slice().sort(function (a, b) { return b.p10 - a.p10; }).slice(0, 100);
@@ -2336,6 +2450,49 @@ function renderCap() {
   } else {
     $('sectorGrades').innerHTML = '<div class="sp-head"><span class="sp-title">板块五级分级（S/A/B/C/D）</span></div>' +
       '<div class="sp-logic" style="color:var(--muted)">板块数据暂不可用，自动重试中…</div>';
+  }
+  /* 情绪周期 × 板块分级 联动 */
+  var lk = calcLinkage();
+  if (lk) {
+    var phases = [
+      { name: '冰点期', color: '#64748b', pos: '0~5%仓', desc: '空仓/极小仓' },
+      { name: '修复期', color: '#38bdf8', pos: '10~20%仓', desc: 'B级候选池' },
+      { name: '主升期', color: '#f0453a', pos: '40~70%仓', desc: 'S/A重仓' },
+      { name: '分歧期', color: '#f5a524', pos: '20~40%仓', desc: '主线高低切' },
+      { name: '退潮期', color: '#10b981', pos: '0~10%仓', desc: 'B级套利' }
+    ];
+    var phaseHtml = phases.map(function (p) {
+      var active = p.name === lk.phase;
+      return '<div class="lk-phase' + (active ? ' active' : '') + '" style="' + (active ? 'border-color:' + p.color : '') + '">' +
+        '<div class="pname" style="' + (active ? 'color:' + p.color : '') + '">' + p.name + '</div>' +
+        '<div class="ppos">' + p.pos + '</div>' +
+        '<div class="ppos">' + p.desc + '</div></div>';
+    }).join('');
+    var allGrades = ['S', 'A', 'B', 'C', 'D'];
+    var gradeChips = allGrades.map(function (g) {
+      var isAllowed = lk.allowedGrades.indexOf(g) >= 0;
+      var gcolor = g === 'S' ? '#f0453a' : g === 'A' ? '#f5a524' : g === 'B' ? '#38bdf8' : g === 'C' ? '#94a3b8' : '#64748b';
+      return '<span class="lk-grade-chip ' + (isAllowed ? 'allowed' : 'banned') + '" style="background:' + gcolor + '22;color:' + gcolor + ';border:1px solid ' + gcolor + '55">' + g + '级' + (isAllowed ? '✓' : '✗') + '</span>';
+    }).join('');
+    var allowedSecHtml = lk.allowedSecs.length ? lk.allowedSecs.map(function (s) {
+      return '<span class="lk-grade-chip allowed" style="background:' + s.color + '22;color:' + s.color + ';border:1px solid ' + s.color + '55">' + s.grade + ' · ' + esc(s.name) + '（' + s.zt + '涨停）</span>';
+    }).join('') : '<span style="color:var(--muted);font-size:12px">当前周期下无符合条件的板块</span>';
+    $('linkagePanel').innerHTML =
+      '<div class="lk-head"><span class="lk-badge" style="background:' + lk.phaseColor + '22;color:' + lk.phaseColor + ';border:1px solid ' + lk.phaseColor + '55">' + lk.phase + '</span>' +
+      '<span class="lk-position">情绪指数 ' + lk.idx + '/100 · 仓位上限 <b style="color:var(--text)">' + lk.posLimit + '</b>' + (lk.trend === 'up' ? ' · 趋势↑' : lk.trend === 'down' ? ' · 趋势↓' : '') + '</span></div>' +
+      '<div class="lk-matrix">' + phaseHtml + '</div>' +
+      '<div class="lk-rules">' +
+      '<div class="lk-rule-row"><span class="rk">允许等级</span><span>' + gradeChips + '</span></div>' +
+      '<div class="lk-rule-row"><span class="rk">可操作板块</span><div class="lk-allowed">' + allowedSecHtml + '</div></div>' +
+      '<div class="lk-rule-row"><span class="rk">周期逻辑</span><span style="line-height:1.7">' + lk.logic + '</span></div>' +
+      '<div class="lk-rule-row"><span class="rk">操作规则</span><span style="line-height:1.7;color:#c3cdd9"><b>' + lk.action + '</b></span></div>' +
+      '</div>' +
+      '<details class="mood-logic"><summary>查看联动体系完整规则</summary><div class="sp-logic">' +
+      '<b>核心原则</b>：情绪周期定仓位上限，板块分级定选股方向；情绪周期优先于板块评级——环境差，再好的S级也要降档减仓。<br>' +
+      '<b>五周期仓位</b>：冰点0~5%（只B级活口/首板）→ 修复10~20%（B级低吸，跟踪晋级）→ 主升40~70%（S/A重仓，B级轻仓）→ 分歧20~40%（S降级A做低位补涨，禁高位接力）→ 退潮0~10%（B级尾盘套利，次日兑现）。<br>' +
+      '<b>硬性约束</b>：①退潮/冰点期S/A降档为B级处理；②修复期若全市场最高仅C级=假修复，不提高仓位；③周期切换时新旧切割——主升→分歧卖S/A旧主线，冰点→修复放弃D级旧退潮板块。<br>' +
+      '<b>口诀</b>：周期定仓位上限，板块定选股方向；主升抓S/A，分歧做低位；退潮只B套利，冰点少试或空仓；环境差强板降档，旧主线退潮不抄。' +
+      '</div></details>';
   }
   /* 昨日涨停池深度分析 */
   var yd = calcYztDeep();
