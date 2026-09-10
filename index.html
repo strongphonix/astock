@@ -233,6 +233,22 @@ footer b{color:#c3cdd9}
 .rank-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
 .rank-val{font-weight:700;font-variant-numeric:tabular-nums}
 .mainline{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.sector-grades{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.sg-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:8px}
+.sg-table{width:100%;border-collapse:collapse;font-size:12px;min-width:780px}
+.sg-table th{background:var(--panel);color:var(--muted);font-weight:500;padding:6px 8px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0}
+.sg-table td{padding:6px 8px;border-bottom:1px solid var(--line2);color:var(--text);vertical-align:middle}
+.sg-table .sg-reason{color:var(--muted);font-size:11px;line-height:1.5;white-space:normal;min-width:180px;max-width:260px}
+.sg-grade{display:inline-block;padding:2px 10px;border-radius:4px;font-weight:700;font-size:13px;min-width:24px;text-align:center}
+.sg-S{background:#f0453a22;color:#f0453a;border:1px solid #f0453a55}
+.sg-A{background:#f5a52422;color:#f5a524;border:1px solid #f5a52455}
+.sg-B{background:#38bdf822;color:#38bdf8;border:1px solid #38bdf855}
+.sg-C{background:#94a3b822;color:#94a3b8;border:1px solid #94a3b855}
+.sg-D{background:#64748b22;color:#64748b;border:1px solid #64748b55}
+.sg-cat{font-size:11px;padding:1px 6px;border-radius:3px}
+.sg-cat-policy{background:#f0453a18;color:#f0453a}
+.sg-cat-industry{background:#f5a52418;color:#f5a524}
+.sg-cat-none{background:#64748b18;color:#64748b}
 .ml-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ml-badge{padding:5px 14px;border-radius:999px;font-size:14px;font-weight:800}
 .ml-top{font-size:12.5px;color:#c3cdd9;margin-top:8px;line-height:1.8}
@@ -413,6 +429,7 @@ footer b{color:#c3cdd9}
     </div>
     <div class="cap-row" id="capRow"></div>
     <div class="mainline" id="mainLine"></div>
+    <div class="sector-grades" id="sectorGrades"></div>
     <div class="cross-analysis" id="crossAnalysis"></div>
     <div class="stock-pick" id="stockPick"></div>
     <div class="lhb-track" id="lhbTrack"></div>
@@ -1631,6 +1648,106 @@ function calcMainLine() {
   }
   return { verdict: verdict, color: color, sub: sub, note: note, logic: logic, top3: top3 };
 }
+/* 板块五级分级（S/A/B/C/D）：三维度=资金+强度+催化，实时评级 */
+function calcSectorGrades() {
+  var secDegraded = !(S.secUp || []).length && !(S.secDn || []).length;
+  var secAll = secDegraded ? deriveSectors() : (S.secUp || []).concat(S.secDn || []);
+  if (!secAll.length && !S.zt.length) return null;
+  // 构建板块基础数据
+  var sec = {};
+  secAll.forEach(function (x) {
+    if (x && x.f14 && !sec[x.f14]) sec[x.f14] = { name: x.f14, fund: x.f62, pct: x.f3, zt: 0, maxLbc: 0, zb: 0, dt: 0, ztFund: 0 };
+  });
+  // 统计涨停/连板/炸板/跌停 + 涨停封单资金累加
+  S.zt.forEach(function (x) {
+    if (!x.hybk) return;
+    if (!sec[x.hybk]) sec[x.hybk] = { name: x.hybk, fund: null, pct: null, zt: 0, maxLbc: 0, zb: 0, dt: 0, ztFund: 0 };
+    sec[x.hybk].zt++;
+    sec[x.hybk].ztFund += num(x.fund) || 0;
+    if ((x.lbc || 1) > sec[x.hybk].maxLbc) sec[x.hybk].maxLbc = x.lbc || 1;
+  });
+  S.zb.forEach(function (x) {
+    if (!x.hybk) return;
+    if (!sec[x.hybk]) sec[x.hybk] = { name: x.hybk, fund: null, pct: null, zt: 0, maxLbc: 0, zb: 0, dt: 0, ztFund: 0 };
+    sec[x.hybk].zb++;
+  });
+  S.dt.forEach(function (x) {
+    if (!x.hybk) return;
+    if (!sec[x.hybk]) sec[x.hybk] = { name: x.hybk, fund: null, pct: null, zt: 0, maxLbc: 0, zb: 0, dt: 0, ztFund: 0 };
+    sec[x.hybk].dt++;
+  });
+  // 催化匹配：从消息面提取行业→催化类型映射
+  var catMap = {};
+  var news = [
+    { type: '政策', sectors: ['银行'] }, { type: '政策', sectors: ['保险'] },
+    { type: '政策', sectors: ['软件开发'] }, { type: '政策', sectors: ['IT服务'] },
+    { type: '政策', sectors: ['光伏设备'] }, { type: '政策', sectors: ['汽车整车'] },
+    { type: '政策', sectors: ['家居用品'] }, { type: '政策', sectors: ['通用设备'] },
+    { type: '政策', sectors: ['食品加工制造'] }, { type: '产业', sectors: ['黑色家电', '白色家电'] }
+  ];
+  news.forEach(function (n) {
+    n.sectors.forEach(function (s) { if (!catMap[s]) catMap[s] = n.type; });
+  });
+  // 评级（基于强度+催化，去除不稳定的资金/涨幅维度）
+  var rows = Object.keys(sec).map(function (k) {
+    var s = sec[k];
+    var zt = s.zt, maxLbc = s.maxLbc, zb = s.zb, dt = s.dt;
+    var cat = catMap[k] || '无';
+    var zbRate = (zt + zb) > 0 ? (zb / (zt + zb)) : 0;
+    var grade, reason, color;
+    // D级判定（满足2条）：涨停≤1 + (跌停≥1 或 炸板率>50%)
+    var dHits = 0;
+    if (zt <= 1) dHits++;
+    if (dt >= 1) dHits++;
+    if (zbRate > 0.5 && zt > 0) dHits++;
+    if (dHits >= 2 && zt < 4) {
+      grade = 'D'; color = '#64748b';
+      reason = '退潮：涨停' + zt + '家' + (dt ? '、跌停' + dt + '家' : '') + (zbRate > 0.5 ? '、炸板率' + (zbRate * 100).toFixed(0) + '%' : '');
+    }
+    // S级：涨停≥8 + 完整梯队(maxLbc≥3) + 有催化
+    else if (zt >= 8 && maxLbc >= 3 && cat !== '无') {
+      grade = 'S'; color = '#f0453a';
+      reason = '主线主升：涨停' + zt + '家、最高' + maxLbc + '板、' + cat + '催化';
+    }
+    // A级：涨停≥6 + 有梯队(maxLbc≥2) + 有催化
+    else if (zt >= 6 && maxLbc >= 2 && cat !== '无') {
+      grade = 'A'; color = '#f5a524';
+      reason = '主线分歧：涨停' + zt + '家、最高' + maxLbc + '板、' + cat + '催化';
+    }
+    // B级：涨停4-7 + 有连板
+    else if (zt >= 4 && zt <= 7 && maxLbc >= 1) {
+      grade = 'B'; color = '#38bdf8';
+      reason = '活口轮动：涨停' + zt + '家、最高' + maxLbc + '板' + (cat !== '无' ? '、' + cat + '催化' : '、资金情绪驱动');
+    }
+    // C级：涨停2-3
+    else if (zt >= 2 && zt <= 3) {
+      grade = 'C'; color = '#94a3b8';
+      reason = '零散轮动：涨停' + zt + '家' + (maxLbc >= 2 ? '、最高' + maxLbc + '板' : '、无连板') + (cat !== '无' ? '、' + cat + '催化' : '');
+    }
+    // 其余：涨停0-1但不满足D级 → C级
+    else {
+      grade = 'C'; color = '#94a3b8';
+      reason = zt === 0 ? '无涨停' + (dt ? '、跌停' + dt + '家' : '') : '仅' + zt + '家涨停，孤板无梯队';
+    }
+    return {
+      name: k, grade: grade, color: color, reason: reason,
+      zt: zt, maxLbc: maxLbc, zb: zb, dt: dt,
+      cat: cat, zbRate: zbRate
+    };
+  });
+  // 排序：S>A>B>C>D，同级按涨停数降序
+  var gradeOrder = { S: 0, A: 1, B: 2, C: 3, D: 4 };
+  rows.sort(function (a, b) {
+    if (gradeOrder[a.grade] !== gradeOrder[b.grade]) return gradeOrder[a.grade] - gradeOrder[b.grade];
+    return b.zt - a.zt;
+  });
+  // 只展示有涨停或有资金流入或有跌停的板块（前15）
+  var shown = rows.filter(function (r) { return r.zt > 0 || r.dt > 0 || (r.fund != null && Math.abs(r.fund) > 1); }).slice(0, 15);
+  var sCount = shown.filter(function (r) { return r.grade === 'S'; }).length;
+  var aCount = shown.filter(function (r) { return r.grade === 'A'; }).length;
+  var bCount = shown.filter(function (r) { return r.grade === 'B'; }).length;
+  return { rows: shown, degraded: secDegraded, sCount: sCount, aCount: aCount, bCount: bCount };
+}
 /* 10日涨幅前100 × 成交额>10亿 行业交叉分析 */
 function calcCross() {
   var tenList = (S.tenGainMap || []).slice().sort(function (a, b) { return b.p10 - a.p10; }).slice(0, 100);
@@ -1941,6 +2058,39 @@ function renderCap() {
     '<span class="hint">' + ml.sub + '</span></div>' +
     '<div class="ml-top">' + ml.note + '</div>' +
     '<details class="mood-logic"><summary>查看主线判定逻辑</summary><div>' + ml.logic + '</div></details>';
+  /* 板块五级分级（S/A/B/C/D） */
+  var sg = calcSectorGrades();
+  if (sg && sg.rows.length) {
+    var sgRows = sg.rows.map(function (r) {
+      var catClass = r.cat === '政策' ? 'sg-cat-policy' : (r.cat === '产业' ? 'sg-cat-industry' : 'sg-cat-none');
+      return '<tr><td><span class="sg-grade sg-' + r.grade + '">' + r.grade + '</span></td>' +
+        '<td><b>' + esc(r.name) + '</b></td>' +
+        '<td>' + r.zt + '</td>' +
+        '<td>' + (r.maxLbc ? r.maxLbc + '板' : '—') + '</td>' +
+        '<td>' + (r.zb || 0) + '</td>' +
+        '<td>' + (r.dt || 0) + '</td>' +
+        '<td><span class="sg-cat ' + catClass + '">' + r.cat + '</span></td>' +
+        '<td class="sg-reason">' + esc(r.reason) + '</td></tr>';
+    }).join('');
+    $('sectorGrades').innerHTML =
+      '<div class="sp-head"><span class="sp-title">板块五级分级（S/A/B/C/D）</span>' +
+      '<span class="hint">三维度：强度+催化 · 实时评级 · S' + sg.sCount + '/A' + sg.aCount + '/B' + sg.bCount + (sg.degraded ? ' · 降级模式' : '') + '</span></div>' +
+      '<div class="sg-scroll"><table class="sg-table"><thead><tr><th>等级</th><th>板块</th><th>涨停</th><th>连板</th><th>炸板</th><th>跌停</th><th>催化</th><th>评级理由</th></tr></thead>' +
+      '<tbody>' + sgRows + '</tbody></table></div>' +
+      '<details class="mood-logic"><summary>查看分级标准与操作规则</summary><div class="sp-logic">' +
+      '<b>S级｜主线主升</b>（红）：涨停≥8 + 完整梯队(≥3板) + 政策/产业催化 → 可重仓4~7成，打板/低吸/龙头接力，分歧加仓。<br>' +
+      '<b>A级｜主线分歧</b>（橙）：涨停≥6 + 有梯队(≥2板) + 有催化 → 中仓2~4成，低吸+质量首板，谨慎接力高位。<br>' +
+      '<b>B级｜活口轮动</b>（蓝）：涨停4~7 + 有连板 → 轻仓≤10%，尾盘低吸中军/首板，隔夜套利不格局。<br>' +
+      '<b>C级｜零散轮动</b>（灰）：涨停2~3 + 无梯队 → 尽量不参与，侦察仓≤5%，只看首板。<br>' +
+      '<b>D级｜退潮</b>（深灰）：涨停≤1 + (跌停/炸板率>50% 满足2条) → 禁止买入，不抄底后排。<br>' +
+      '<b>评级维度</b>：强度（涨停家数/连板梯队/炸板率/跌停）+ 催化（政策/产业消息）。<br>' +
+      '<b>冲突规则</b>：持续性优先级 > 涨停家数；大盘退潮/冰点环境下板块评级整体降一档。<br>' +
+      '<b>口诀</b>：S重仓、A中仓、B轻套利，C少碰、D不抄底。' +
+      '</div></details>';
+  } else {
+    $('sectorGrades').innerHTML = '<div class="sp-head"><span class="sp-title">板块五级分级（S/A/B/C/D）</span></div>' +
+      '<div class="sp-logic" style="color:var(--muted)">板块数据暂不可用，自动重试中…</div>';
+  }
   var cross = calcCross();
   if (cross) {
     function stockLine(stocks, key) {
