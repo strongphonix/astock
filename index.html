@@ -275,7 +275,6 @@ footer b{color:#c3cdd9}
 .sp-logic b{color:var(--text)}
 .stock-pick .mood-logic{margin-top:8px}
 @media(max-width:768px){.sp-grid{grid-template-columns:1fr}}
-.sector-persist{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .sp-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .sp-title{font-size:14px;font-weight:700;color:var(--text)}
 .sp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
@@ -308,9 +307,6 @@ footer b{color:#c3cdd9}
 .inst-table td{padding:6px 4px;text-align:center;border-bottom:1px solid var(--line);color:#c3cdd9}
 .inst-table td:nth-child(2){text-align:left;font-weight:600;color:#e2e8f0}
 .hot-rank{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
-.hot-tabs{display:flex;gap:8px;margin:8px 0}
-.hot-tab{padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid var(--line);color:var(--muted);background:var(--panel)}
-.hot-tab.active{background:#f0453a22;color:#f0453a;border-color:#f0453a55;font-weight:600}
 .hot-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .hot-table th{background:var(--panel);padding:7px 6px;text-align:center;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);white-space:nowrap}
 .hot-table td{padding:7px 6px;text-align:center;border-bottom:1px solid var(--line);color:#c3cdd9}
@@ -419,7 +415,6 @@ footer b{color:#c3cdd9}
     <div class="mainline" id="mainLine"></div>
     <div class="cross-analysis" id="crossAnalysis"></div>
     <div class="stock-pick" id="stockPick"></div>
-    <div class="sector-persist" id="sectorPersist"></div>
     <div class="lhb-track" id="lhbTrack"></div>
     <div class="hot-rank" id="hotRank"></div>
     <div class="news-catalyst" id="newsCatalyst"></div>
@@ -489,66 +484,11 @@ var CFG = {
   refreshSec: 180    // 默认 3 分钟
 };
 var UT = '7eea3edcaed734bea9cbfc24409ed989';
-/* 行业名称 → 东财板块代码映射（用于降级时获取板块日K） */
-var INDUSTRY_BK = {
-  '电力': 'BK0428', '厨卫电器': 'BK0429', '城商行': 'BK0430', '航海装备': 'BK0431',
-  '电能综合服务': 'BK0432', '元件': 'BK0433', '玻璃制造': 'BK0434', '玻纤制造': 'BK0435',
-  '玻璃玻纤': 'BK0436', '印制电路板': 'BK0437', '水力发电': 'BK0438', '光伏设备': 'BK0439',
-  '通信设备': 'BK0440', '通信服务': 'BK0441', '通信线缆及配套': 'BK0442', '电网设备': 'BK0443',
-  '电机': 'BK0444', '风电设备': 'BK0445', '燃气Ⅱ': 'BK0538', '其他能源': 'BK0447',
-  '煤炭开采': 'BK0448', '油气开采': 'BK0449', '石油加工': 'BK0450', '农化制品': 'BK0451',
-  '钾肥': 'BK0452', '氮肥': 'BK0453', '磷肥': 'BK0454', '复合肥': 'BK0455',
-  '农药': 'BK0456', '种子': 'BK0457', '渔业': 'BK0458', '养殖业': 'BK0459',
-  '饲料': 'BK0460', '动物保健': 'BK0461', '种植业': 'BK0462', '其他种植业': 'BK0463',
-  '农产品加工': 'BK0464', '化学制药': 'BK0465', '中药': 'BK0466', '生物制品': 'BK0467',
-  '医药商业': 'BK0468', '医疗器械': 'BK0469', '医疗服务': 'BK0470', '银行': 'BK0471',
-  '保险': 'BK0472', '多元金融': 'BK0473', '证券Ⅱ': 'BK0474', '房地产开发': 'BK0475',
-  '房地产服务': 'BK0476', '基建': 'BK0477', '装修装饰': 'BK0478', '装修建材': 'BK0479',
-  '家居用品': 'BK0480', '一般零售': 'BK0481', '专业连锁': 'BK0482', '旅游及景': 'BK0483',
-  '旅游及景区': 'BK0483', '酒店餐饮': 'BK0484', '影视院线': 'BK0485', '数字媒体': 'BK0486',
-  '出版': 'BK0487', '游戏': 'BK0488', '广告营销': 'BK0489', '互联网电商': 'BK0490',
-  '软件开发': 'BK0491', 'IT服务Ⅱ': 'BK0492', '计算机设备': 'BK0493', '消费电子': 'BK0494',
-  '光学光电子': 'BK0495', '半导体': 'BK0496', '汽车整车': 'BK0497', '汽车零部件': 'BK0498',
-  '汽车服务': 'BK0499', '家用电器': 'BK0501', '白色家电': 'BK0502', '黑色家电': 'BK0503',
-  '小家电': 'BK0504', '食品加工': 'BK0505', '食品加工制造': 'BK0505', '饮料乳品': 'BK0506',
-  '白酒Ⅱ': 'BK0507', '啤酒': 'BK0508', '服装家纺': 'BK0509', '饰品': 'BK0510',
-  '美容护理': 'BK0511', '造纸': 'BK0512', '包装印刷': 'BK0513', '橡胶制品': 'BK0514',
-  '塑料': 'BK0515', '化学纤维': 'BK0516', '化学原料': 'BK0517', '化学制品': 'BK0518',
-  '钢铁': 'BK0519', '工业金属': 'BK0520', '贵金属': 'BK0521', '小金属': 'BK0522',
-  '能源金属': 'BK0523', '金属新材料': 'BK0524', '通用设备': 'BK0525', '专用设备': 'BK0526',
-  '工程机械': 'BK0527', '轨交设备': 'BK0528', '航空装备': 'BK0529', '航天装备': 'BK0530',
-  '军工电子': 'BK0531', '自动化设备': 'BK0533', '仪器仪表': 'BK0534', '环保': 'BK0535',
-  '环境治理': 'BK0536', '水务': 'BK0537', '燃气': 'BK0538', '公用事业': 'BK0539',
-  '物流': 'BK0540', '港口航运': 'BK0541', '航空机场': 'BK0542', '公路铁路': 'BK0543',
-  '航运港口': 'BK0544', '贸易': 'BK0545', '综合Ⅱ': 'BK0546', '航运港口Ⅱ': 'BK0544',
-  '其他电子': 'BK0547', '电子化学品': 'BK0548', '能源金属Ⅱ': 'BK0523', '小金属Ⅱ': 'BK0522',
-  '贵金属Ⅱ': 'BK0521', '工业金属Ⅱ': 'BK0520', '钢铁Ⅱ': 'BK0519', '塑料Ⅱ': 'BK0515',
-  '橡胶制品Ⅱ': 'BK0514', '造纸Ⅱ': 'BK0512', '美容护理Ⅱ': 'BK0511', '饰品Ⅱ': 'BK0510',
-  '服装家纺Ⅱ': 'BK0509', '啤酒Ⅱ': 'BK0508', '白酒': 'BK0507', '饮料乳品Ⅱ': 'BK0506',
-  '小家电Ⅱ': 'BK0504', '黑色家电Ⅱ': 'BK0503', '白色家电Ⅱ': 'BK0502', '家用电器Ⅱ': 'BK0501',
-  '汽车服务Ⅱ': 'BK0499', '汽车零部件Ⅱ': 'BK0498', '汽车整车Ⅱ': 'BK0497', '半导体Ⅱ': 'BK0496',
-  '消费电子Ⅱ': 'BK0494', '计算机设备Ⅱ': 'BK0493', '互联网电商Ⅱ': 'BK0490',
-  '广告营销Ⅱ': 'BK0489', '游戏Ⅱ': 'BK0488', '出版Ⅱ': 'BK0487', '数字媒体Ⅱ': 'BK0486',
-  '影视院线Ⅱ': 'BK0485', '酒店餐饮Ⅱ': 'BK0484', '专业连锁Ⅱ': 'BK0482', '一般零售Ⅱ': 'BK0481',
-  '家居用品Ⅱ': 'BK0480', '装修建材Ⅱ': 'BK0479', '装修装饰Ⅱ': 'BK0478', '基建Ⅱ': 'BK0477',
-  '房地产服务Ⅱ': 'BK0476', '房地产开发Ⅱ': 'BK0475', '证券': 'BK0474', '保险Ⅱ': 'BK0472',
-  '银行Ⅱ': 'BK0471', '医疗服务Ⅱ': 'BK0470', '医疗器械Ⅱ': 'BK0469', '医药商业Ⅱ': 'BK0468',
-  '生物制品Ⅱ': 'BK0467', '中药Ⅱ': 'BK0466', '化学制药Ⅱ': 'BK0465', '农产品加工Ⅱ': 'BK0464',
-  '其他种植业Ⅱ': 'BK0463', '种植业Ⅱ': 'BK0462', '动物保健Ⅱ': 'BK0461', '饲料Ⅱ': 'BK0460',
-  '养殖业Ⅱ': 'BK0459', '渔业Ⅱ': 'BK0458', '种子Ⅱ': 'BK0457', '农药Ⅱ': 'BK0456',
-  '复合肥Ⅱ': 'BK0455', '磷肥Ⅱ': 'BK0454', '氮肥Ⅱ': 'BK0453', '钾肥Ⅱ': 'BK0452',
-  '农化制品Ⅱ': 'BK0451', '石油加工Ⅱ': 'BK0450', '油气开采Ⅱ': 'BK0449', '煤炭开采Ⅱ': 'BK0448',
-  '其他能源Ⅱ': 'BK0447', '风电设备Ⅱ': 'BK0445', '电机Ⅱ': 'BK0444', '电网设备Ⅱ': 'BK0443',
-  '通信线缆及配套Ⅱ': 'BK0442', '通信服务Ⅱ': 'BK0441', '通信设备Ⅱ': 'BK0440', '光伏设备Ⅱ': 'BK0439',
-  '水力发电Ⅱ': 'BK0438', '印制电路板Ⅱ': 'BK0437', '玻纤制造Ⅱ': 'BK0435', '玻璃制造Ⅱ': 'BK0434',
-  '元件Ⅱ': 'BK0433', '电能综合服务Ⅱ': 'BK0432', '航海装备Ⅲ': 'BK0431', '城商行Ⅲ': 'BK0430',
-  '厨卫电器Ⅱ': 'BK0429', '电力Ⅱ': 'BK0428', '旅游及景区Ⅱ': 'BK0483', '燃气Ⅱ': 'BK0538'
-};
 var S = {
   zt: [], zb: [], dt: [], gain: [], lose: [], yzt: [], yztQ: {},
   secUp: [], secDn: [], spd: [], vr: [],
   capOv: null, bigAmt: [], tenGainMap: [], tenGainReady: false, tenBusy: false, mainLine: null,
-  secKlines: {}, lhb: [], inst: [], hotRank: [], hotYest: [],
+  lhb: [], inst: [], hotRank: [],
   ov: null, ts: null, loading: false, errors: [], activeTab: 'zt',
   sortKey: null, sortDir: -1, search: '', ind: '', history: [],
   degradedGain: false, degradedLose: false
@@ -729,25 +669,6 @@ function fetchSectors(po) {
     '&np=1&fltt=2&invt=2&fid=f3&fs=m:90+t:2+f:!50' +
     '&fields=f2,f3,f8,f12,f14,f62,f104,f105,f128,f141', 'cb');
 }
-/* 板块日K（东财 JSONP，secid=90.BKxxxx）：返回近5日/近20日涨跌幅 */
-function fetchSectorKline(bkCode) {
-  var code = (bkCode || '').toUpperCase();
-  if (!code) return Promise.resolve(null);
-  return jsonp('https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=90.' + code +
-    '&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61' +
-    '&klt=101&fqt=1&end=20500101&lmt=25', 'cb')
-    .then(function (d) {
-      var kl = (d && d.data && d.data.klines) || [];
-      if (!kl.length) return null;
-      var last = parseFloat(kl[kl.length - 1].split(',')[2]);
-      var d5 = kl.length > 5 ? parseFloat(kl[kl.length - 6].split(',')[2]) : null;
-      var d20 = kl.length > 20 ? parseFloat(kl[kl.length - 21].split(',')[2]) : null;
-      return {
-        p5: d5 ? ((last / d5 - 1) * 100) : null,
-        p20: d20 ? ((last / d20 - 1) * 100) : null
-      };
-    }).catch(function () { return null; });
-}
 /* 昨日龙虎榜（push2ex，与涨停池同域，较稳定） */
 function fetchLHB(dateStr) {
   return jsonp('https://push2ex.eastmoney.com/getTopicLHBList?ut=' + UT +
@@ -803,32 +724,53 @@ function fetchHotRank() {
       });
     }).catch(function () { return []; });
 }
-/* 批量获取热榜个股详情：用东财 ulist 接口（含 f62 主力净流入、f100 行业） */
+/* 批量获取热榜个股详情：腾讯批量行情（稳定）+ 东财数据池匹配行业/资金 */
 function fetchHotDetail(stocks) {
   if (!stocks || !stocks.length) return Promise.resolve([]);
-  var secids = stocks.map(function (s) {
-    var m = s.market === 'SH' ? '1' : (s.market === 'BJ' ? '0' : '0');
-    return m + '.' + s.code;
+  // 构造腾讯代码：sh600869 / sz000001 / bj430047
+  var qCodes = stocks.map(function (s) {
+    return (s.market || 'SH').toLowerCase() + s.code;
   }).join(',');
-  return jsonp('https://push2.eastmoney.com/api/qt/ulist.np/get?secids=' + secids +
-    '&fields=f2,f3,f5,f6,f8,f10,f12,f14,f20,f21,f23,f62,f100', 'cb')
-    .then(function (d) {
-      var diff = (d && d.data && d.data.diff) || [];
+  return fetch('https://qt.gtimg.cn/q=' + qCodes)
+    .then(function (r) { return r.arrayBuffer(); })
+    .then(function (buf) {
+      var text = new TextDecoder('gbk').decode(buf);
+      var lines = text.split(';');
       var map = {};
-      diff.forEach(function (x) { if (x && x.f12) map[x.f12] = x; });
+      lines.forEach(function (line) {
+        var m = line.match(/v_(\w+)="([^"]*)"/);
+        if (!m) return;
+        var code = m[1].replace(/^(sh|sz|bj)/i, '');
+        var parts = m[2].split('~');
+        if (parts.length < 35) return;
+        map[code] = {
+          name: parts[1],
+          pct: parseFloat(parts[32]),
+          amt: parseFloat(parts[37]) * 10000  // 腾讯成交额单位是万，转元
+        };
+      });
+      // 从已有数据池匹配行业和主力净流入
+      var pool = {};
+      [].concat(S.zt || [], S.zb || [], S.dt || [], S.gain || [], S.lose || [], S.spd || [], S.vr || [], S.yzt || []).forEach(function (x) {
+        var c = x.c || x.f12;
+        if (c && !pool[c]) pool[c] = x;
+      });
       stocks.forEach(function (s) {
-        var x = map[s.code];
-        if (x) {
-          s.name = x.f14 || s.name;
-          s.pct = num(x.f3) != null ? num(x.f3) / 100 : null;  // ulist 接口 f3 需除以100
-          s.amt = num(x.f6);
-          s.fund = num(x.f62);
-          s.ind = x.f100 || '';
+        var q = map[s.code];
+        if (q) {
+          s.name = q.name || s.name;
+          s.pct = isFinite(q.pct) ? q.pct : null;
+          s.amt = isFinite(q.amt) ? q.amt : null;
+        }
+        var p = pool[s.code];
+        if (p) {
+          s.ind = p.hybk || p.f100 || s.ind || '';
+          if (p.f62 != null) s.fund = num(p.f62);
         }
       });
       return stocks;
     }).catch(function () {
-      // 降级：从已有数据池匹配
+      // 腾讯也失败：从已有数据池匹配
       var pool = {};
       [].concat(S.zt || [], S.zb || [], S.dt || [], S.gain || [], S.lose || [], S.spd || [], S.vr || [], S.yzt || []).forEach(function (x) {
         var c = x.c || x.f12;
@@ -841,6 +783,7 @@ function fetchHotDetail(stocks) {
           s.pct = x.zdp != null ? x.zdp : num(x.f3);
           s.amt = x.amount != null ? x.amount : num(x.f6);
           s.ind = x.hybk || x.f100 || '';
+          if (x.f62 != null) s.fund = num(x.f62);
         }
       });
       return stocks;
@@ -932,32 +875,6 @@ function backfill(kind, triesLeft) {
         S.degradedLose = kind === 'lose';
         renderCharts(); renderCap(); renderCapCharts(); renderTableUI();
       }
-    } else if (kind === 'secUp') {
-      // 板块榜彻底失败：用行业映射表补拉降级板块的日K（近5日/近20日）
-      var ztBy = {};
-      S.zt.forEach(function (x) { if (x.hybk) ztBy[x.hybk] = (ztBy[x.hybk] || 0) + 1; });
-      var gainByInd = {};
-      (S.gain || []).forEach(function (x) { if (x.f100) { if (!gainByInd[x.f100]) gainByInd[x.f100] = 0; gainByInd[x.f100]++; } });
-      (S.lose || []).forEach(function (x) { if (x.f100) { if (!gainByInd[x.f100]) gainByInd[x.f100] = 0; gainByInd[x.f100]++; } });
-      var allInd = {};
-      Object.keys(ztBy).forEach(function (k) { allInd[k] = true; });
-      Object.keys(gainByInd).forEach(function (k) { allInd[k] = true; });
-      var names = Object.keys(allInd).sort(function (a, b) {
-        var sa = (ztBy[a] || 0) * 10 + (gainByInd[a] || 0);
-        var sb = (ztBy[b] || 0) * 10 + (gainByInd[b] || 0);
-        return sb - sa;
-      }).slice(0, 10);
-      var kPromises = names.map(function (name) {
-        var bk = INDUSTRY_BK[name];
-        if (!bk) return Promise.resolve({ name: name, p5: null, p20: null });
-        return fetchSectorKline(bk).then(function (k) {
-          return { name: name, p5: k ? k.p5 : null, p20: k ? k.p20 : null };
-        }).catch(function () { return { name: name, p5: null, p20: null }; });
-      });
-      Promise.all(kPromises).then(function (ks) {
-        (ks || []).forEach(function (x) { if (x) S.secKlines[x.name] = x; });
-        renderCharts(); renderCap(); renderCapCharts(); renderTableUI();
-      });
     }
     return;
   }
@@ -978,21 +895,7 @@ function backfill(kind, triesLeft) {
     if (arr.length) {
       if (kind === 'gain') S.gain = filterStocks(arr);
       else if (kind === 'lose') S.lose = filterStocks(arr);
-      else if (kind === 'secUp') {
-        S.secUp = arr;
-        // 补拉板块日K（近5日/近20日）
-        var topSecs = arr.slice(0, 10);
-        var secKPromises = topSecs.map(function (s) {
-          return fetchSectorKline(s.f12).then(function (k) {
-            return { name: s.f14, p5: k ? k.p5 : null, p20: k ? k.p20 : null };
-          }).catch(function () { return { name: s.f14, p5: null, p20: null }; });
-        });
-        Promise.all(secKPromises).then(function (ks) {
-          (ks || []).forEach(function (x) { if (x) S.secKlines[x.name] = x; });
-          renderCharts(); renderCap(); renderCapCharts(); renderTableUI();
-        });
-        return;
-      }
+      else if (kind === 'secUp') S.secUp = arr;
       else if (kind === 'secDn') S.secDn = arr;
       else if (kind === 'big') S.bigAmt = arr.filter(function (x) { return num(x.f6) >= 1e9; });
       else if (kind === 'lhb') S.lhb = arr;
@@ -1063,16 +966,6 @@ function loadAll() {
     // 热榜数据
     if (rs[14] && rs[14].length) {
       S.hotRank = rs[14];
-      // 缓存今日热榜到 localStorage，供明日"昨日热榜"使用
-      try {
-        var todayKey = 'astock_hot_' + fmtDate(new Date());
-        localStorage.setItem(todayKey, JSON.stringify(rs[14]));
-        // 读取昨日热榜
-        var y = new Date(); y.setDate(y.getDate() - 1);
-        var yKey = 'astock_hot_' + fmtDate(y);
-        var yData = localStorage.getItem(yKey);
-        S.hotYest = yData ? JSON.parse(yData) : [];
-      } catch (e) { S.hotYest = []; }
     }
     // 昨日涨停 → 今日行情
     var codes = S.yzt.map(function (x) { return x.c; });
@@ -1081,22 +974,13 @@ function loadAll() {
       S.history.push({ t: new Date().toTimeString().slice(0, 5), idx: calcEmotion().idx });
       if (S.history.length > 300) S.history.shift();
       buildTenGain();
-      // 板块日K（前10强势板块，并发拉取，用于持续性分析）
-      var topSecs = (S.secUp || []).slice(0, 10);
-      var secKPromises = topSecs.map(function (s) {
-        return fetchSectorKline(s.f12).then(function (k) {
-          return { name: s.f14, p5: k ? k.p5 : null, p20: k ? k.p20 : null };
-        });
-      });
       // 昨日龙虎榜
       var pLhb = safe(function () { return fetchLHB(ystr); }, '龙虎榜');
       // 昨日机构席位
       var pInst = safe(function () { return fetchInstitution(ystr); }, '机构席位');
-      return Promise.all([Promise.all(secKPromises), pLhb, pInst]).then(function (r2) {
-        S.secKlines = {};
-        (r2[0] || []).forEach(function (x) { if (x) S.secKlines[x.name] = x; });
-        S.lhb = r2[1] || [];
-        S.inst = r2[2] || [];
+      return Promise.all([pLhb, pInst]).then(function (r2) {
+        S.lhb = r2[0] || [];
+        S.inst = r2[1] || [];
       });
     });
   }).then(function () {
@@ -1890,51 +1774,6 @@ function calcStockPick() {
   return { mainNames: mainNames, leaders: leaders, midCaps: midCaps, runners: runners, logic: logic };
 }
 /* 强势板块持续性分析：当日涨跌/近5日/近20日/净流入/涨停股数/涨跌家数/持续性判断 */
-function calcSectorPersistence() {
-  var ztBy = {};
-  S.zt.forEach(function (x) { if (x.hybk) ztBy[x.hybk] = (ztBy[x.hybk] || 0) + 1; });
-  var secList = (S.secUp || []).slice(0, 10);
-  var degraded = false;
-  // 降级：板块榜接口断连时，从涨幅/跌幅榜按行业分组派生（含资金代理）
-  if (!secList.length) {
-    degraded = true;
-    secList = deriveSectors().sort(function (a, b) {
-      var sa = (ztBy[a.f14] || 0) * 10 + (a.f104 || 0);
-      var sb = (ztBy[b.f14] || 0) * 10 + (b.f104 || 0);
-      return sb - sa;
-    }).slice(0, 10);
-  }
-  if (!secList.length) return null;
-  var rows = secList.map(function (s) {
-    var k = S.secKlines[s.f14] || {};
-    var pct = s.f3 != null ? num(s.f3) : null, p5 = k.p5, p20 = k.p20, fund = s.f62 != null ? num(s.f62) : null;
-    var judge, color;
-    // 参考四档：加速 / 趋势延续 / 观察 / 一日游
-    if (pct != null && pct > 0) {
-      if (p5 != null && p5 > 0 && p20 != null && p20 > 0) {
-        judge = '趋势延续'; color = '#f0453a';
-      } else {
-        judge = '加速'; color = '#f5a524';
-      }
-    } else if (pct != null && pct <= 0) {
-      if ((p5 != null && p5 > 0) || (p20 != null && p20 > 0)) {
-        judge = '观察'; color = '#38bdf8';
-      } else {
-        judge = '一日游'; color = '#64748b';
-      }
-    } else if (ztBy[s.f14] >= 2) {
-      judge = '涨停密集'; color = '#f0453a';
-    } else {
-      judge = '观察'; color = '#64748b';
-    }
-    return {
-      name: s.f14, pct: pct, p5: p5, p20: p20, fund: fund,
-      zt: ztBy[s.f14] || 0, up: num(s.f104), dn: num(s.f105),
-      judge: judge, color: color
-    };
-  });
-  return { rows: rows, degraded: degraded };
-}
 /* 昨日龙虎榜跟踪：上榜个股今日收盘表现 */
 function calcLHBTracking() {
   // 三级数据源：机构席位 > 龙虎榜 > 昨日涨停池
@@ -2176,33 +2015,6 @@ function renderCap() {
     $('stockPick').innerHTML = '<div class="sp-head"><span class="sp-title">主线标的筛选</span></div>' +
       '<div class="sp-logic" style="color:var(--muted)">暂无明确主线板块，不推荐标的。等待主线判定模块输出主线方向后自动筛选。</div>';
   }
-  /* 强势板块持续性 */
-  var spd = calcSectorPersistence();
-  if (spd) {
-    var spdRows = spd.rows.map(function (r) {
-      function pctCell(v) { return v == null ? '<span style="color:var(--muted)">—</span>' : '<span class="' + (v >= 0 ? 'up-txt' : 'down-txt') + '">' + (v >= 0 ? '+' : '') + v.toFixed(2) + '%</span>'; }
-      function fundCell(v) { return v == null ? '<span style="color:var(--muted)">—</span>' : '<span class="' + (v >= 0 ? 'up-txt' : 'down-txt') + '">' + (v >= 0 ? '+' : '') + (v / 1e8).toFixed(2) + '</span>'; }
-      return '<tr><td>' + esc(r.name) + '</td><td>' + pctCell(r.pct) + '</td><td>' + pctCell(r.p5) + '</td><td>' + pctCell(r.p20) + '</td>' +
-        '<td>' + fundCell(r.fund) + '</td><td>' + r.zt + '</td><td>' + r.up + '/' + r.dn + '</td>' +
-        '<td><span class="sp-judge" style="background:' + r.color + '22;color:' + r.color + ';border:1px solid ' + r.color + '55">' + r.judge + '</span></td></tr>';
-    }).join('');
-    $('sectorPersist').innerHTML =
-      '<div class="sp-head"><span class="sp-title">强势板块持续性</span>' +
-      '<span class="hint">前10强势板块 · 近5日/近20日基于板块日K · 净流入单位：亿' + (spd.degraded ? ' · 行业降级数据（净流入需板块榜接口）' : '') + '</span></div>' +
-      '<table class="sp-table"><thead><tr><th>板块</th><th>当日涨跌</th><th>近5日</th><th>近20日</th><th>净流入（亿）</th><th>涨停股数</th><th>涨/跌家数</th><th>持续性判断</th></tr></thead>' +
-      '<tbody>' + spdRows + '</tbody></table>' +
-      '<details class="mood-logic"><summary>查看持续性判断逻辑</summary><div class="sp-logic">' +
-      '<b>判断规则（四档）</b>：<br>' +
-      '① <b>趋势延续</b>（红）：当日涨 + 近5日涨 + 近20日涨，短中长期趋势一致向上，持续性最强；<br>' +
-      '② <b>加速</b>（橙）：当日涨，但近5日或近20日有回调，短期资金加速流入，关注能否延续；<br>' +
-      '③ <b>观察</b>（蓝）：当日跌但近5日或近20日仍涨，强势板块短期回调，关注支撑位能否企稳；<br>' +
-      '④ <b>一日游</b>（灰）：当日跌且近5日/20日均跌，趋势破位，回避。<br>' +
-      '<b>使用方法</b>：优先「趋势延续」板块做龙头/中军；「加速」板块可小仓位试错；「观察」板块等企稳信号；「一日游」板块不追。' +
-      '</div></details>';
-  } else {
-    $('sectorPersist').innerHTML = '<div class="sp-head"><span class="sp-title">强势板块持续性</span></div>' +
-      '<div class="sp-logic" style="color:var(--muted)">板块数据暂不可用，自动重试中…</div>';
-  }
   /* 昨日龙虎榜跟踪 */
   var lhb = calcLHBTracking();
   if (lhb) {
@@ -2270,17 +2082,15 @@ function renderCap() {
     $('lhbTrack').innerHTML = '<div class="sp-head"><span class="sp-title">昨日龙虎榜跟踪</span></div>' +
       '<div class="sp-logic" style="color:var(--muted)">昨日龙虎榜数据暂不可用，自动重试中…（非交易日或接口暂不可用）</div>';
   }
-  /* 热榜 TOP50（今日/昨日切换） */
+  /* 热榜 TOP20（东财人气榜） */
   (function () {
     var today = S.hotRank || [];
-    var yest = S.hotYest || [];
-    if (!today.length && !yest.length) {
+    if (!today.length) {
       $('hotRank').innerHTML = '<div class="sp-head"><span class="sp-title">热榜 TOP20（东财人气榜）</span></div>' +
         '<div class="sp-logic" style="color:var(--muted)">热榜数据获取中…（首次加载需几秒，自动重试）</div>';
       return;
     }
     function hotRows(list) {
-      if (!list || !list.length) return '<tr><td colspan="7" style="color:var(--muted);padding:20px">暂无数据</td></tr>';
       return list.slice(0, 20).map(function (s, i) {
         var numCls = i < 3 ? 'top3' : 'normal';
         var pct = s.pct != null ? ((s.pct >= 0 ? '+' : '') + s.pct.toFixed(2) + '%') : '—';
@@ -2300,27 +2110,18 @@ function renderCap() {
           '</tr>';
       }).join('');
     }
-    var tabId = 'hotTab';
-    var activeTab = window._hotTab || 'today';
-    var list = activeTab === 'today' ? today : yest;
-    var label = activeTab === 'today' ? '今日热榜' : '昨日热榜';
     $('hotRank').innerHTML =
       '<div class="sp-head"><span class="sp-title">热榜 TOP20（东财人气榜）</span>' +
-      '<span class="hint">' + label + ' · 排名变化↑新进/↓下降 · 资金单位亿</span></div>' +
-      '<div class="hot-tabs">' +
-      '<span class="hot-tab ' + (activeTab === 'today' ? 'active' : '') + '" onclick="window._hotTab=\'today\';renderCap();">今日热榜</span>' +
-      '<span class="hot-tab ' + (activeTab === 'yest' ? 'active' : '') + '" onclick="window._hotTab=\'yest\';renderCap();">昨日热榜</span>' +
-      '</div>' +
+      '<span class="hint">实时更新 · 排名变化↑新进/↓下降 · 资金单位亿</span></div>' +
       '<table class="hot-table"><thead><tr><th>排名</th><th>股票</th><th>涨跌幅</th><th>主力净流入</th><th>成交额</th><th>所属行业</th><th>排名变化</th></tr></thead><tbody>' +
-      hotRows(list) + '</tbody></table>' +
+      hotRows(today) + '</tbody></table>' +
       '<details class="mood-logic"><summary>查看热榜使用逻辑</summary><div class="sp-logic">' +
-      '<b>数据来源</b>：东方财富人气榜（按用户关注度排名），每轮刷新更新。昨日热榜来自本地缓存（首次使用后次日生效）。<br>' +
+      '<b>数据来源</b>：东方财富人气榜（按用户关注度排名），每轮刷新更新。行情数据来自腾讯接口（稳定），行业与资金从涨跌停/涨幅榜数据池匹配。<br>' +
       '<b>核心用法</b>：<br>' +
       '· 热榜前排个股 = 市场关注度最高，容易形成合力，但也容易一致性过高导致冲高回落；<br>' +
       '· 排名变化↑ = 关注度快速上升，可能是新题材启动信号；排名持续霸榜 = 主线龙头特征；<br>' +
       '· 热榜个股 + 主力净流入为正 + 所属行业在主线板块 = 高胜率候选；<br>' +
-      '· 热榜前排但主力净流出 = 散户接盘特征，谨慎追高；<br>' +
-      '· 昨日热榜前排今日继续上涨 = 热度延续，题材有持续性；今日大跌 = 热度退潮。' +
+      '· 热榜前排但主力净流出 = 散户接盘特征，谨慎追高。' +
       '</div></details>';
   })();
   /* 消息面/政策催化速览 */
