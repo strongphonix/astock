@@ -268,6 +268,24 @@ footer b{color:#c3cdd9}
 .lk-grade-chip.allowed{opacity:1}
 .lk-grade-chip.banned{opacity:0.3;text-decoration:line-through}
 @media(max-width:768px){.lk-matrix{grid-template-columns:repeat(3,1fr)}}
+.morning-flow{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.mf-timeline{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.mf-node{flex:1 1 120px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 10px;border-left:3px solid #64748b}
+.mf-node.active{border-left-color:#f0453a;background:#f0453a12}
+.mf-node .mftime{font-size:12px;font-weight:700;color:#94a3b8}
+.mf-node.active .mftime{color:#f0453a}
+.mf-node .mftitle{font-size:13px;font-weight:700;margin-top:2px}
+.mf-node .mfdesc{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
+.mf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.mf-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.mf-card h4{margin:0 0 6px 0;font-size:13px;color:var(--text)}
+.mf-table{width:100%;font-size:11.5px;border-collapse:collapse}
+.mf-table th{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line);color:var(--muted);font-weight:600}
+.mf-table td{padding:4px 6px;border-bottom:1px solid var(--line2);vertical-align:top}
+.mf-trap{background:#f0453a12;border:1px solid #f0453a33;border-radius:6px;padding:6px 10px;margin-top:6px;font-size:11.5px;color:#fca5a5;line-height:1.6}
+.mf-checklist{background:#10b98112;border:1px solid #10b98133;border-radius:6px;padding:8px 12px;margin-top:8px;font-size:12px;line-height:1.8}
+.mf-checklist b{color:#34d399}
+@media(max-width:768px){.mf-grid{grid-template-columns:1fr}}
 .yzt-deep{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .yd-mood{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .yd-badge{padding:5px 14px;border-radius:999px;font-size:14px;font-weight:800}
@@ -485,6 +503,7 @@ footer b{color:#c3cdd9}
     <div class="mainline" id="mainLine"></div>
     <div class="sector-grades" id="sectorGrades"></div>
     <div class="linkage-panel" id="linkagePanel"></div>
+    <div class="morning-flow" id="morningFlow"></div>
     <div class="yzt-deep" id="yztDeep"></div>
     <div class="rotation-track" id="rotationTrack"></div>
     <div class="cross-analysis" id="crossAnalysis"></div>
@@ -742,6 +761,64 @@ function fetchSectors(po) {
   return jsonp('https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=60&po=' + po +
     '&np=1&fltt=2&invt=2&fid=f3&fs=m:90+t:2+f:!50' +
     '&fields=f2,f3,f8,f12,f14,f62,f104,f105,f128,f141', 'cb');
+}
+/* 新浪行业板块（东财断连时的备用数据源，GBK编码，数据准确） */
+function fetchSectorsSina() {
+  return fetch('https://vip.stock.finance.sina.com.cn/q/view/newSinaHy.php')
+    .then(function (r) { return r.arrayBuffer(); })
+    .then(function (buf) {
+      var text = new TextDecoder('gbk').decode(buf);
+      var start = text.indexOf('{');
+      var end = text.lastIndexOf('}');
+      if (start < 0 || end < 0) return [];
+      var obj = JSON.parse(text.slice(start, end + 1));
+      var arr = [];
+      Object.keys(obj).forEach(function (k) {
+        var parts = obj[k].split(',');
+        if (parts.length >= 8) {
+          arr.push({
+            f14: parts[1],
+            f3: parseFloat(parts[4]),
+            f6: parseFloat(parts[7]),
+            f8: parseFloat(parts[5]),
+            f128: parts.length > 12 ? parts[12] : '',
+            f12: parts[0],
+            sina: true
+          });
+        }
+      });
+      return arr;
+    }).catch(function () { return []; });
+}
+/* 同花顺行业板块（东财断连时的第二备用源，GBK编码，分类更细，含主力净流入） */
+function fetchSectorsTHS() {
+  return fetch('http://q.10jqka.com.cn/thshy/', {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+  })
+    .then(function (r) { return r.arrayBuffer(); })
+    .then(function (buf) {
+      var text = new TextDecoder('gbk').decode(buf);
+      var arr = [];
+      // 解析表格行
+      var rows = text.match(/<tr[^>]*>[\s\S]*?<\/tr>/g) || [];
+      rows.forEach(function (row) {
+        var cells = row.match(/<td[^>]*>[\s\S]*?<\/td>/g) || [];
+        if (cells.length < 8) return;
+        var vals = cells.map(function (c) { return c.replace(/<[^>]+>/g, '').trim(); });
+        // vals: [排名, 板块名, 涨跌幅%, 成交额(亿), 主力净流入(亿), 主力净占比%, 上涨家数, 下跌家数, ...领涨股]
+        var name = vals[1];
+        var pct = parseFloat(vals[2]);
+        var amt = parseFloat(vals[3]) * 1e8; // 亿→元
+        var fund = parseFloat(vals[4]) * 1e8; // 亿→元
+        var up = parseInt(vals[6]) || 0;
+        var dn = parseInt(vals[7]) || 0;
+        var lead = vals.length > 9 ? vals[9] : '';
+        if (name && isFinite(pct)) {
+          arr.push({ f14: name, f3: pct, f6: amt, f62: fund, f104: up, f105: dn, f128: lead, f12: name, ths: true });
+        }
+      });
+      return arr;
+    }).catch(function () { return []; });
 }
 /* 昨日龙虎榜（push2ex，与涨停池同域，较稳定） */
 function fetchLHB(dateStr) {
@@ -1011,6 +1088,8 @@ function loadAll() {
   var pOv  = safe(function () { return fetchIndexOv(); }, '大盘概况');
   var pSecUp = safe(function () { return fetchSectors(1); }, '板块涨幅');
   var pSecDn = safe(function () { return fetchSectors(0); }, '板块跌幅');
+  var pSecSina = fetchSectorsSina().catch(function () { return []; });
+  var pSecTHS = fetchSectorsTHS().catch(function () { return []; });
   var pSpd = safe(function () { return fetchSpeed(); }, '涨速榜');
   var pVr  = safe(function () { return fetchVolRatio(); }, '量比榜');
   var pCap1 = safe(function () { return fetchKline('1.000001', 5, 120); }, '沪市分钟量');
@@ -1018,7 +1097,7 @@ function loadAll() {
   var pBig = safe(function () { return fetchBigAmt(); }, '成交额榜');
   var pHot = fetchHotRank().then(function (list) { return fetchHotDetail(list); }).catch(function () { return []; });
 
-  Promise.all([pZt, pZb, pDt, pG, pL, pYzt, pOv, pSecUp, pSecDn, pSpd, pVr, pCap1, pCap2, pBig, pHot]).then(function (rs) {
+  Promise.all([pZt, pZb, pDt, pG, pL, pYzt, pOv, pSecUp, pSecDn, pSpd, pVr, pCap1, pCap2, pBig, pHot, pSecSina, pSecTHS]).then(function (rs) {
     if (rs[0]) S.zt = rs[0];
     if (rs[1]) S.zb = rs[1];
     if (rs[2]) S.dt = rs[2];
@@ -1028,6 +1107,20 @@ function loadAll() {
     if (rs[6]) S.ov = rs[6];
     if (rs[7]) S.secUp = (rs[7].data && rs[7].data.diff) || [];
     if (rs[8]) S.secDn = (rs[8].data && rs[8].data.diff) || [];
+    // 东财板块榜断连时，优先用同花顺（分类更细+主力净流入），其次用新浪
+    var thsSec = rs[16] || [];
+    var sinaSec = rs[15] || [];
+    var backupSec = thsSec.length ? thsSec : sinaSec;
+    if ((!S.secUp.length || !S.secDn.length) && backupSec.length) {
+      var sorted = backupSec.slice().sort(function (a, b) { return b.f3 - a.f3; });
+      if (!S.secUp.length) S.secUp = sorted.slice(0, 50);
+      if (!S.secDn.length) S.secDn = sorted.slice().reverse().slice(0, 50);
+      S.sinaSec = !thsSec.length;
+      S.thsSec = !!thsSec.length;
+    } else {
+      S.sinaSec = false;
+      S.thsSec = false;
+    }
     if (rs[9]) S.spd = (rs[9].data && rs[9].data.diff) || [];
     if (rs[10]) S.vr = (rs[10].data && rs[10].data.diff) || [];
     S.capOv = calcCap(rs[11], rs[12]);
@@ -1208,10 +1301,12 @@ function calcRotation() {
   var secDegraded = !(S.secUp || []).length && !(S.secDn || []).length;
   var secAll = secDegraded ? deriveSectors() : (S.secUp || []).concat(S.secDn || []);
   if (!secAll.length && !S.zt.length) return null;
+  var useSina = S.sinaSec === true;
+  var fundKey = useSina ? 'f6' : 'f62';
   // 构建板块数据
   var sec = {};
   secAll.forEach(function (x) {
-    if (x && x.f14 && !sec[x.f14]) sec[x.f14] = { name: x.f14, pct: x.f3, fund: x.f62, upCnt: x.f104, dnCnt: x.f105, zt: 0, zb: 0 };
+    if (x && x.f14 && !sec[x.f14]) sec[x.f14] = { name: x.f14, pct: x.f3, fund: x[fundKey], upCnt: x.f104, dnCnt: x.f105, zt: 0, zb: 0 };
   });
   var ztBy = {}, zbBy = {};
   S.zt.forEach(function (x) {
@@ -1402,20 +1497,21 @@ var TABS = {
     ]
   },
   sect: {
-    title: '异动板块', hint: '行业板块实时异动（领涨/领跌 + 主力净流入流出） · 默认按异动幅度排序',
+    title: '异动板块', hint: '行业板块实时异动（领涨/领跌 + 资金流向） · 默认按异动幅度排序',
     src: function () {
       var rows = [];
+      var fundKey = S.sinaSec ? 'f6' : 'f62';
       (S.secUp || []).forEach(function (x) {
-        rows.push({ name: x.f14, zdp: x.f3, fund: x.f62, up: x.f104, dn: x.f105, lead: x.f128, type: '领涨', abs: Math.abs(x.f3 || 0) });
+        rows.push({ name: x.f14, zdp: x.f3, fund: x[fundKey], up: x.f104, dn: x.f105, lead: x.f128, type: '领涨', abs: Math.abs(x.f3 || 0) });
       });
       (S.secDn || []).forEach(function (x) {
-        rows.push({ name: x.f14, zdp: x.f3, fund: x.f62, up: x.f104, dn: x.f105, lead: x.f128, type: '领跌', abs: Math.abs(x.f3 || 0) });
+        rows.push({ name: x.f14, zdp: x.f3, fund: x[fundKey], up: x.f104, dn: x.f105, lead: x.f128, type: '领跌', abs: Math.abs(x.f3 || 0) });
       });
       return rows;
     }, defSort: { k: 'abs', dir: -1 },
     cols: [
       { k: 'name', t: '板块', r: 'txt' }, { k: 'zdp', t: '涨跌幅', r: 'pct' },
-      { k: 'fund', t: '主力净流入', r: 'big' }, { k: 'up', t: '上涨家数', r: 'int' },
+      { k: 'fund', t: S.sinaSec ? '成交额' : '主力净流入', r: 'big' }, { k: 'up', t: '上涨家数', r: 'int' },
       { k: 'dn', t: '下跌家数', r: 'int' }, { k: 'lead', t: '领涨股', r: 'txt' },
       { k: 'type', t: '异动', r: 'sectype' }
     ]
@@ -1849,9 +1945,13 @@ function calcMainLine() {
     return { verdict: '板块数据源暂不可用', color: '#64748b', sub: '自动重试中',
       note: '板块资金与涨幅数据暂未取到，待数据恢复后自动输出主线判定。', logic: '', top3: [] };
   }
+  var useSina = S.sinaSec === true;
+  var useTHS = S.thsSec === true;
+  var fundKey = useSina ? 'f6' : 'f62';
+  var fundLabel = useSina ? '成交额' : '主力净流入';
   var sec = {};
   secAll.forEach(function (x) {
-    if (x && x.f14 && !sec[x.f14]) sec[x.f14] = { name: x.f14, fund: x.f62, pct: x.f3, zt: x.zt || 0, maxLbc: 0 };
+    if (x && x.f14 && !sec[x.f14]) sec[x.f14] = { name: x.f14, fund: x[fundKey], pct: x.f3, zt: x.zt || 0, maxLbc: 0 };
   });
   var ztBy = {};
   S.zt.forEach(function (x) {
@@ -1882,7 +1982,7 @@ function calcMainLine() {
   var t1 = top3[0];
   var logic =
     '<b>主线判定逻辑（四维加权）</b>：<br>① 涨停家数（权重35%）：板块内涨停股数量，衡量做多密度与赚钱效应；<br>' +
-    '② 主力净流入（25%）：板块主力资金净流入，衡量大资金方向（净流出按0计）；<br>' +
+    '② ' + fundLabel + '（25%）：板块' + fundLabel + '，衡量大资金方向（净流出按0计）；<br>' +
     '③ 板块涨幅（25%）：板块涨跌幅，衡量资金认可度（下跌按0计）；<br>' +
     '④ 连板高度（15%）：板块内最高连板数，衡量题材持续性与空间。<br>' +
     '<b>判定规则</b>：Top1 强度分 ≥60 且领先第二名 ≥15 分 → 主线明确；Top1 ≥45 → 主线迹象（待资金确认）；否则 → 无明确主线。<br>' +
@@ -1891,17 +1991,17 @@ function calcMainLine() {
   if (!t1 || t1.score < 35) {
     verdict = '无明确主线'; color = '#64748b';
     sub = '板块涨幅、资金与涨停均分散';
-    note = '当前各板块强度分均低于 35，涨停家数、主力净流入与板块涨幅没有集中到单一方向，属存量轮动/退潮特征。操作上不追高、轻仓试错，等待情绪修复后主线浮出。';
+    note = '当前各板块强度分均低于 35，涨停家数、' + fundLabel + '与板块涨幅没有集中到单一方向，属存量轮动/退潮特征。操作上不追高、轻仓试错，等待情绪修复后主线浮出。';
   } else if (t1.score >= 60 && (!top3[1] || t1.score - top3[1].score >= 15)) {
     verdict = '主线明确：' + t1.name; color = '#f0453a';
     sub = '强度分 ' + t1.score + ' · 领先第二名 ' + (top3[1] ? t1.score - top3[1].score : t1.score) + ' 分';
-    note = '<b>' + t1.name + '</b>：涨停 ' + t1.zt + ' 家、主力净流入 ' + fmtBig(t1.fund) + '、板块涨幅 ' +
+    note = '<b>' + t1.name + '</b>：涨停 ' + t1.zt + ' 家、' + fundLabel + ' ' + (useSina ? fmtMoney(t1.fund) : fmtBig(t1.fund)) + '、板块涨幅 ' +
       (t1.pct >= 0 ? '+' : '') + (t1.pct || 0).toFixed(2) + '%、最高 ' + t1.maxLbc + ' 板，四个维度同步占优，具备主线特征。次强：' +
       (top3[1] ? top3[1].name + '（' + top3[1].score + ' 分）' : '—') + '。';
   } else if (t1.score >= 45) {
     verdict = '存在主线迹象：' + t1.name; color = '#f5a524';
     sub = '强度分 ' + t1.score;
-    note = '<b>' + t1.name + '</b>：涨停 ' + t1.zt + ' 家、主力净流入 ' + fmtBig(t1.fund) + '、板块涨幅 ' +
+    note = '<b>' + t1.name + '</b>：涨停 ' + t1.zt + ' 家、' + fundLabel + ' ' + (useSina ? fmtMoney(t1.fund) : fmtBig(t1.fund)) + '、板块涨幅 ' +
       (t1.pct >= 0 ? '+' : '') + (t1.pct || 0).toFixed(2) + '%。强度未显著领先，需后续轮次资金与涨停家数持续确认。';
   } else {
     verdict = '主线弱化/快速轮动'; color = '#64748b';
@@ -1911,6 +2011,12 @@ function calcMainLine() {
   if (secDegraded) {
     note += '<br><span style="color:var(--muted);font-size:11px">※ 板块榜接口暂不可用，当前基于涨幅/跌幅榜行业分组降级推算（资金为成交额代理），数据恢复后自动切换为精确值。</span>';
     sub += ' · 降级模式';
+  } else if (useTHS) {
+    note += '<br><span style="color:var(--muted);font-size:11px">※ 东财板块榜接口暂不可用，当前使用同花顺行业板块数据（分类更细，含主力净流入），东财恢复后自动切换。</span>';
+    sub += ' · 同花顺行业';
+  } else if (useSina) {
+    note += '<br><span style="color:var(--muted);font-size:11px">※ 东财板块榜接口暂不可用，当前使用新浪行业板块数据（49个行业分类，涨幅/成交额准确，资金为成交额代理），东财恢复后自动切换。</span>';
+    sub += ' · 新浪行业';
   }
   return { verdict: verdict, color: color, sub: sub, note: note, logic: logic, top3: top3 };
 }
@@ -1919,10 +2025,12 @@ function calcSectorGrades() {
   var secDegraded = !(S.secUp || []).length && !(S.secDn || []).length;
   var secAll = secDegraded ? deriveSectors() : (S.secUp || []).concat(S.secDn || []);
   if (!secAll.length && !S.zt.length) return null;
+  var useSina = S.sinaSec === true;
+  var fundKey = useSina ? 'f6' : 'f62';
   // 构建板块基础数据
   var sec = {};
   secAll.forEach(function (x) {
-    if (x && x.f14 && !sec[x.f14]) sec[x.f14] = { name: x.f14, fund: x.f62, pct: x.f3, zt: 0, maxLbc: 0, zb: 0, dt: 0, ztFund: 0 };
+    if (x && x.f14 && !sec[x.f14]) sec[x.f14] = { name: x.f14, fund: x[fundKey], pct: x.f3, zt: 0, maxLbc: 0, zb: 0, dt: 0, ztFund: 0 };
   });
   // 统计涨停/连板/炸板/跌停 + 涨停封单资金累加
   S.zt.forEach(function (x) {
@@ -2107,6 +2215,84 @@ function calcLinkage() {
     allowedSecs: allowedSecs, trend: trend,
     bigMian: bigMian, median: median, jinji: jinji, avgChg: avgChg
   };
+}
+/* 早盘盯盘流程：竞价预判→开盘确认→10点定性 */
+function renderMorningFlow() {
+  var now = new Date();
+  var hm = now.getHours() * 60 + now.getMinutes();
+  var nodes = [
+    { time: '9:15-9:20', title: '试单阶段', desc: '可撤单，封单涨跌多为假动作，只记录潜在题材，不下判断', start: 9*60+15, end: 9*60+20 },
+    { time: '9:20-9:25', title: '竞价预判【最重要】', desc: '不可撤单，真实资金表态。看昨涨停竞价溢价/低开率、高标竞价、候选板块竞价涨幅', start: 9*60+20, end: 9*60+25 },
+    { time: '9:25-9:30', title: '准备窗口', desc: '核对候选板块催化逻辑，龙头/中军加入盯盘列表', start: 9*60+25, end: 9*60+30 },
+    { time: '9:30-10:00', title: '黄金确认窗口', desc: '看承接、量能、梯队扩散、炸板率。给板块S/A/B/C/D打分，锁定仓位上限', start: 9*60+30, end: 10*60 },
+    { time: '10:00-10:30', title: '日内定性窗口', desc: '确认主线是否成立，观察高低切信号。10:30后出手确定性更高', start: 10*60, end: 10*60+30 },
+    { time: '13:00-13:30', title: '午后验证', desc: '早盘强势板块回流兑现窗口，虚强板块午后跳水降级', start: 13*60, end: 13*60+30 },
+    { time: '14:00-14:30', title: '尾盘预演', desc: '资金为次日布局，低位尾盘抢筹=次日方向，高位尾盘砸盘=避险', start: 14*60, end: 14*60+30 }
+  ];
+  var timelineHtml = nodes.map(function (n) {
+    var active = hm >= n.start && hm <= n.end;
+    return '<div class="mf-node' + (active ? ' active' : '') + '">' +
+      '<div class="mftime">' + n.time + '</div>' +
+      '<div class="mftitle">' + n.title + '</div>' +
+      '<div class="mfdesc">' + n.desc + '</div></div>';
+  }).join('');
+  // 情绪周期速查表
+  var moodTable = '<table class="mf-table"><thead><tr><th>周期</th><th>早盘核心信号</th><th>仓位</th></tr></thead><tbody>' +
+    '<tr><td><b style="color:#64748b">冰点</b></td><td>昨涨停竞价大面积低开，溢价负数；大面股增加，炸板率极高；涨停少跌停多；最高板块C级</td><td>0~5%</td></tr>' +
+    '<tr><td><b style="color:#38bdf8">修复</b></td><td>昨涨停溢价由负转正；核按钮消失；断板股不A杀；出现B级板块有晋级希望</td><td>10~20%</td></tr>' +
+    '<tr><td><b style="color:#f0453a">主升</b></td><td>昨涨停竞价溢价高；高标龙头强势；板块梯队批量涨停；出现S/A级主线；炸板率低</td><td>40~70%</td></tr>' +
+    '<tr><td><b style="color:#f5a524">分歧</b></td><td>高标炸板但中军不崩；断板股震荡不批量大面；S降级A，板块内部高低切</td><td>20~40%</td></tr>' +
+    '<tr><td><b style="color:#10b981">退潮</b></td><td>旧主线竞价集体低开，资金持续流出；昨涨停大量低开下跌；仅零星B级活口脉冲</td><td>0~10%</td></tr>' +
+    '</tbody></table>';
+  // 板块分级速查
+  var gradeTable = '<table class="mf-table"><thead><tr><th>等级</th><th>早盘判定</th><th>操作</th></tr></thead><tbody>' +
+    '<tr><td><b style="color:#f0453a">S</b></td><td>10点前涨停≥8家，梯队完整（龙头+中军+首板），资金持续流入，催化中长期</td><td>重仓进攻</td></tr>' +
+    '<tr><td><b style="color:#f5a524">A</b></td><td>涨停≥6家，高位断板但低位首板批量补涨，资金小幅流出但累计净流入</td><td>中仓低吸</td></tr>' +
+    '<tr><td><b style="color:#38bdf8">B</b></td><td>涨停4~7家，梯队单薄，单日资金流入难持续，短期事件催化</td><td>轻仓套利</td></tr>' +
+    '<tr><td><b style="color:#94a3b8">C</b></td><td>涨停2~3家，孤板无梯队，仅个别个股异动，板块跟风不动</td><td>尽量不参与</td></tr>' +
+    '<tr><td><b style="color:#64748b">D</b></td><td>高位股竞价低开核按钮，资金持续净流出，反弹即兑现</td><td>禁止抄底</td></tr>' +
+    '</tbody></table>';
+  // 主线判定三要素
+  var mainLine = '<div style="font-size:12px;line-height:1.8">' +
+    '<b style="color:#f0453a">主线三要素（必须同时满足）</b>：<br>' +
+    '① <b>资金</b>：板块持续净流入，不是脉冲式一笔拉完<br>' +
+    '② <b>强度</b>：涨停≥8家，梯队完整（高标+中位+首板+中军），板块联动强<br>' +
+    '③ <b>催化</b>：逻辑具备延续性，不是一次性消息刺激<br>' +
+    '<span style="color:var(--muted)">缺任意一条 = B/C级轮动，不是主线。同一时间只有一条主线，两个板块同时强=混沌轮动。</span>' +
+    '</div>';
+  // 高频陷阱
+  var traps = '<div class="mf-trap">' +
+    '<b>早盘高频陷阱</b>：<br>' +
+    '① 竞价很强→开盘5分钟冲高→一路跳水 = 竞价诱多，资金兑现<br>' +
+    '② 单一妖股一字板，板块其他不动 = 独立个股，不是板块<br>' +
+    '③ 指数大涨但题材无批量涨停、昨涨停溢价差 = 指数行情，题材弱<br>' +
+    '④ B级活口当主线重仓 = B级是轮动套利，大多一日游，次日早盘兑现' +
+    '</div>';
+  // 极简操作清单
+  var checklist = '<div class="mf-checklist">' +
+    '<b>极简早盘操作清单</b>：<br>' +
+    '<b>9:20-9:25</b>：读取昨涨停竞价溢价、高标竞价、候选板块 → 预判情绪，选2~3个候选板块<br>' +
+    '<b>9:30-9:35</b>：验证候选板块开盘承接，资金流入还是流出，排除诱多<br>' +
+    '<b>9:35-10:00</b>：统计涨停梯队、炸板率，给板块S/A/B/C/D打分；判断情绪周期，锁定仓位<br>' +
+    '<b>10:00</b>：确认有没有主线？S/A还是仅B级活口？观察高低切信号<br>' +
+    '<b>10:30后</b>：只在符合周期+板块评级的方向选股、择机买入' +
+    '</div>';
+  $('morningFlow').innerHTML =
+    '<div class="sp-head"><span class="sp-title">早盘盯盘流程</span>' +
+    '<span class="hint">竞价做预判 · 开盘黄金30分钟确认 · 10点最终定性</span></div>' +
+    '<div class="mf-timeline">' + timelineHtml + '</div>' +
+    '<div class="mf-grid">' +
+    '<div class="mf-card"><h4>情绪周期速查</h4>' + moodTable + '</div>' +
+    '<div class="mf-card"><h4>板块分级速查</h4>' + gradeTable + '</div>' +
+    '</div>' +
+    '<div class="mf-card" style="margin-top:10px"><h4>主线判定规则</h4>' + mainLine + traps + '</div>' +
+    checklist +
+    '<details class="mood-logic"><summary>查看完整早盘流程方法论</summary><div class="sp-logic">' +
+    '<b>优先级</b>：大盘情绪周期（定仓位上限）→ 板块分级（筛方向质量）→ 主线判定（资金+强度+催化）。<br>' +
+    '<b>核心原则</b>：竞价只是预期，必须开盘后用承接、量能、梯队验证；只看竞价容易踩诱多陷阱。<br>' +
+    '<b>分歧≠退潮</b>：分歧=中军扛住、无批量大面、资金主线内部高低切；退潮=中军破位、高位批量大面、资金撤离旧板块。<br>' +
+    '<b>口诀</b>：925做预判，开盘验承接；十点定周期，板块分等级；三要素齐备才主线，缺一则为轮动迹。' +
+    '</div></details>';
 }
 /* 10日涨幅前100 × 成交额>10亿 行业交叉分析 */
 function calcCross() {
@@ -2394,15 +2580,23 @@ function renderCap() {
   $('capCards').innerHTML = cards.join('');
   var secDegraded = !(S.secUp || []).length && !(S.secDn || []).length;
   var secAll = secDegraded ? deriveSectors() : (S.secUp || []).concat(S.secDn || []);
-  var fundTop = secAll.filter(function (x) { return isFinite(x.f62); })
-    .sort(function (a, b) { return b.f62 - a.f62; }).slice(0, 10);
+  var useSina = S.sinaSec === true;
+  var useTHS = S.thsSec === true;
+  // 同花顺有主力净流入(f62)，新浪无f62用成交额(f6)代理
+  var fundKey = useSina ? 'f6' : 'f62';
+  var fundLabel = useSina ? '成交额 TOP10（新浪行业）' : (useTHS ? '主力资金净流入 TOP10（同花顺行业）' : '主力资金净流入 TOP10');
+  var fundTop = secAll.filter(function (x) { return isFinite(x[fundKey]); })
+    .sort(function (a, b) { return b[fundKey] - a[fundKey]; }).slice(0, 10);
   var pctTop = secAll.slice().sort(function (a, b) { return b.f3 - a.f3; }).slice(0, 10);
   var ztTop = indTop(S.zt, 'hybk', 10);
   var pendLi = '<li style="color:var(--muted);border:none">数据源暂不可用，自动重试中…</li>';
-  var degTag = secDegraded ? ' <span class="hint" style="font-size:10px">（行业降级）</span>' : '';
+  var degTag = secDegraded ? ' <span class="hint" style="font-size:10px">（行业降级）</span>' :
+    (useTHS ? ' <span class="hint" style="font-size:10px">（同花顺行业·含主力净流入）</span>' :
+    (useSina ? ' <span class="hint" style="font-size:10px">（新浪行业·49类）</span>' : ''));
   $('capRow').innerHTML =
-    colHtml('主力资金净流入 TOP10' + degTag, fundTop.length ? fundTop.map(function (x, i) {
-      return rankLi(i, x.f14, fmtBig(x.f62), (x.f62 >= 0 ? 'up-txt' : 'down-txt'));
+    colHtml(fundLabel + degTag, fundTop.length ? fundTop.map(function (x, i) {
+      var val = useSina ? fmtMoney(x.f6) : fmtBig(x.f62);
+      return rankLi(i, x.f14, val, (x[fundKey] >= 0 ? 'up-txt' : 'down-txt'));
     }) : [pendLi]) +
     colHtml('板块涨幅 TOP10' + degTag, pctTop.length ? pctTop.map(function (x, i) {
       return rankLi(i, x.f14, ((x.f3 >= 0 ? '+' : '') + x.f3.toFixed(2) + '%'), pctClass(x.f3));
@@ -2494,6 +2688,8 @@ function renderCap() {
       '<b>口诀</b>：周期定仓位上限，板块定选股方向；主升抓S/A，分歧做低位；退潮只B套利，冰点少试或空仓；环境差强板降档，旧主线退潮不抄。' +
       '</div></details>';
   }
+  /* 早盘盯盘流程 */
+  renderMorningFlow();
   /* 昨日涨停池深度分析 */
   var yd = calcYztDeep();
   if (yd) {
