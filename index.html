@@ -468,6 +468,10 @@ footer b{color:#c3cdd9}
 .news-tag.policy{background:#38bdf822;color:#38bdf8;border:1px solid #38bdf855}
 .news-tag.industry{background:#f5a52422;color:#f5a524;border:1px solid #f5a52455}
 .news-tag.none{background:#64748b22;color:#64748b;border:1px solid #64748b55}
+.news-tag.company{background:#a78bfa22;color:#a78bfa;border:1px solid #a78bfa55}
+.news-item.has-stock{background:#f0453a08;border-left:3px solid #f0453a;padding-left:8px;border-radius:0 4px 4px 0}
+.news-stocks{margin-top:4px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:11px;color:var(--muted)}
+.news-stock-tag{background:#f0453a22;color:#f0453a;border:1px solid #f0453a55;border-radius:4px;padding:1px 7px;font-weight:600}
 .news-content{flex:1}
 .news-title{color:#e2e8f0;display:flex;justify-content:space-between;align-items:center}
 .news-time{font-size:11px;color:#64748b;font-weight:400;flex-shrink:0;margin-left:8px}
@@ -3005,19 +3009,16 @@ function calcLHBTracking() {
 /* 实时获取新浪7x24财经快讯 */
 function fetchNews() {
   var url = 'https://zhibo.sina.com.cn/api/zhibo/feed?page=1&page_size=30&zhibo_id=152&tag_id=0&dire=f&dpc=1';
-  return fetch(url, { headers: { 'Referer': 'https://finance.sina.com.cn/' } })
-    .then(function (r) { return r.json(); })
-    .then(function (j) {
-      var list = (j && j.result && j.result.data && j.result.data.feed && j.result.data.feed.list) || [];
-      return list.map(function (it) {
-        return {
-          title: (it.rich_text || '').replace(/<[^>]+>/g, '').trim(),
-          time: it.create_time || '',
-          tag: it.tag || ''
-        };
-      }).filter(function (x) { return x.title.length > 5; });
-    })
-    .catch(function () { return []; });
+  return jsonp(url, 'callback').then(function (j) {
+    var list = (j && j.result && j.result.data && j.result.data.feed && j.result.data.feed.list) || [];
+    return list.map(function (it) {
+      return {
+        title: (it.rich_text || '').replace(/<[^>]+>/g, '').trim(),
+        time: it.create_time || '',
+        tag: it.tag || ''
+      };
+    }).filter(function (x) { return x.title.length > 5; });
+  }).catch(function () { return []; });
 }
 /* 关键词→行业映射（用于自动关联快讯影响板块） */
 var NEWS_KEYWORD_MAP = [
@@ -3059,20 +3060,20 @@ function matchSectorsFromNews(title) {
   });
   return matched;
 }
-/* 消息面/政策催化速览：实时快讯 + 自动关联板块异动 */
+/* 消息面/政策催化速览：实时快讯 + 自动关联板块异动 + 涨停股匹配 */
 function calcNewsCatalyst() {
-  var news = (S.newsList || []).slice(0, 15).map(function (n) {
-    var sectors = matchSectorsFromNews(n.title);
-    var type = '产业';
-    if (/政策|监管|部门|印发|通知|规划|会议|发改委|工信部|财政部|央行|国务院/.test(n.title)) type = '政策';
-    if (/公司|公告|业绩|增持|减持|回购/.test(n.title)) type = '公司';
-    return { type: type, title: n.title, time: n.time, sectors: sectors, noNews: sectors.length === 0 };
+  // 构建涨停股名称关键词（去掉常见后缀，保留核心词）
+  var ztNames = [];
+  var ztNameMap = {};
+  S.zt.forEach(function (x) {
+    if (!x.n) return;
+    ztNames.push(x.n);
+    ztNameMap[x.n] = { code: x.c, hybk: x.hybk, lbc: x.lbc || 1 };
+    // 提取核心词（去掉股份/科技/集团/控股/实业/发展/新材/环保等后缀）
+    var core = x.n.replace(/(股份|科技|集团|控股|实业|发展|新材|环保|能源|电力|医药|生物|智能|数字|国际|中国|华|天|大|中|国)$/g, '');
+    if (core.length >= 2 && core !== x.n && ztNames.indexOf(core) < 0) ztNames.push(core);
   });
-  // 如果实时新闻为空，显示提示
-  if (!news.length) {
-    news = [{ type: '提示', title: '快讯加载中或非交易时段，稍后自动刷新…', sectors: [], noNews: true }];
-  }
-  // 构建当前强势板块集合（涨幅前10 + 涨停行业前10）
+  // 构建强势板块集合
   var strongSec = {};
   (S.secUp || []).slice(0, 15).forEach(function (s) { strongSec[s.f14] = { pct: num(s.f3), src: '涨幅榜' }; });
   var ztBy = {};
@@ -3080,6 +3081,39 @@ function calcNewsCatalyst() {
   Object.keys(ztBy).sort(function (a, b) { return ztBy[b] - ztBy[a]; }).slice(0, 10).forEach(function (k) {
     if (!strongSec[k]) strongSec[k] = { pct: null, src: '涨停' + ztBy[k] + '家' };
   });
+  // 处理新闻
+  var news = (S.newsList || []).slice(0, 30).map(function (n) {
+    var sectors = matchSectorsFromNews(n.title);
+    var type = '产业';
+    if (/政策|监管|部门|印发|通知|规划|会议|发改委|工信部|财政部|央行|国务院|证监会|金融监管/.test(n.title)) type = '政策';
+    if (/公司|公告|业绩|增持|减持|回购|中标|签约|订单/.test(n.title)) type = '公司';
+    // 匹配涨停股
+    var matchedStocks = [];
+    ztNames.forEach(function (name) {
+      if (n.title.indexOf(name) >= 0) {
+        var fullName = ztNameMap[name] ? name : null;
+        if (!fullName) {
+          // 核心词匹配，找对应的完整名称
+          for (var fn in ztNameMap) {
+            if (fn.indexOf(name) >= 0) { fullName = fn; break; }
+          }
+        }
+        if (fullName && matchedStocks.indexOf(fullName) < 0) matchedStocks.push(fullName);
+      }
+    });
+    return { type: type, title: n.title, time: n.time, sectors: sectors, matchedStocks: matchedStocks, noNews: sectors.length === 0 && matchedStocks.length === 0 };
+  });
+  // 优先排序：有涨停股匹配 > 有强势板块关联 > 政策 > 产业 > 其他
+  news.sort(function (a, b) {
+    var sa = (a.matchedStocks.length > 0 ? 2 : 0) + (a.sectors.length > 0 ? 1 : 0) + (a.type === '政策' ? 0.5 : 0);
+    var sb = (b.matchedStocks.length > 0 ? 2 : 0) + (b.sectors.length > 0 ? 1 : 0) + (b.type === '政策' ? 0.5 : 0);
+    return sb - sa;
+  });
+  news = news.slice(0, 15);
+  // 如果实时新闻为空，显示提示
+  if (!news.length) {
+    news = [{ type: '提示', title: '快讯加载中或非交易时段，稍后自动刷新…', sectors: [], matchedStocks: [], noNews: true }];
+  }
   // 关联分析
   var items = news.map(function (n) {
     var sectorInfo = n.sectors.map(function (sec) {
@@ -3093,11 +3127,12 @@ function calcNewsCatalyst() {
       };
     });
     var verifiedCount = sectorInfo.filter(function (x) { return x.verified; }).length;
-    return { type: n.type, title: n.title, time: n.time, sectors: sectorInfo, verifiedCount: verifiedCount, noNews: n.noNews };
+    return { type: n.type, title: n.title, time: n.time, sectors: sectorInfo, matchedStocks: n.matchedStocks || [], verifiedCount: verifiedCount, noNews: n.noNews };
   });
   var verifiedTotal = items.reduce(function (sum, x) { return sum + x.verifiedCount; }, 0);
   var totalSectors = items.reduce(function (sum, x) { return sum + x.sectors.length; }, 0);
-  return { items: items, verifiedTotal: verifiedTotal, totalSectors: totalSectors };
+  var stockMatchCount = items.reduce(function (sum, x) { return sum + (x.matchedStocks ? x.matchedStocks.length : 0); }, 0);
+  return { items: items, verifiedTotal: verifiedTotal, totalSectors: totalSectors, stockMatchCount: stockMatchCount };
 }
 /* 昨日涨停深度分析辅助函数 */
 function ydConclusionText(yd) {
@@ -3654,27 +3689,32 @@ function renderCap() {
   /* 消息面/政策催化速览 */
   var nc = calcNewsCatalyst();
   var newsHtml = nc.items.map(function (n) {
-    var tagCls = n.type === '政策' ? 'policy' : n.type === '产业' ? 'industry' : 'none';
+    var tagCls = n.type === '政策' ? 'policy' : n.type === '产业' ? 'industry' : (n.type === '公司' ? 'company' : 'none');
     var sectorsHtml = n.sectors.map(function (s) {
       var cls = s.fundDriven ? 'fund-driven' : (s.verified ? 'verified' : '');
       var badge = s.verified ? '<span class="news-badge verified">已验证</span>' : (s.fundDriven ? '<span class="news-badge pending">资金驱动</span>' : '');
       var pct = s.pct != null ? ' <span style="color:#f0453a">+' + s.pct.toFixed(2) + '%</span>' : '';
       return '<span class="news-sector ' + cls + '">' + s.name + pct + badge + '</span>';
     }).join('');
-    return '<div class="news-item"><span class="news-tag ' + tagCls + '">' + n.type + '</span>' +
+    var stocksHtml = (n.matchedStocks && n.matchedStocks.length) ?
+      '<div class="news-stocks">关联涨停：' + n.matchedStocks.map(function (s) {
+        return '<span class="news-stock-tag">' + esc(s) + '</span>';
+      }).join('') + '</div>' : '';
+    return '<div class="news-item' + (n.matchedStocks && n.matchedStocks.length ? ' has-stock' : '') + '"><span class="news-tag ' + tagCls + '">' + n.type + '</span>' +
       '<div class="news-content"><div class="news-title">' + esc(n.title) + (n.time ? '<span class="news-time">' + n.time.slice(11, 16) + '</span>' : '') + '</div>' +
-      '<div class="news-sectors">影响：' + sectorsHtml + '</div></div></div>';
+      (sectorsHtml ? '<div class="news-sectors">影响：' + sectorsHtml + '</div>' : '') + stocksHtml + '</div></div>';
   }).join('');
   $('newsCatalyst').innerHTML =
     '<div class="sp-head"><span class="sp-title">消息面 / 政策催化速览</span>' +
-    '<span class="hint">实时快讯 · 自动关联板块异动 · ' + nc.verifiedTotal + '/' + nc.totalSectors + ' 个影响板块已在今日强势榜中验证</span></div>' +
+    '<span class="hint">实时快讯（新浪7x24）· 自动关联涨停股与板块异动 · 匹配涨停股 ' + nc.stockMatchCount + ' 次 · ' + nc.verifiedTotal + '/' + nc.totalSectors + ' 个影响板块已验证</span></div>' +
     '<div class="news-list">' + newsHtml + '</div>' +
     '<details class="mood-logic"><summary>查看消息面分析逻辑</summary><div class="sp-logic">' +
-    '<b>关联方法</b>：将每条消息的「影响板块」与今日涨幅前15板块、涨停行业前10做匹配。<br>' +
-    '<b>已验证（红标）</b>：影响板块出现在今日强势榜中，说明消息已转化为实际资金行为，催化有效。<br>' +
-    '<b>待验证（灰标）</b>：影响板块尚未出现在强势榜中，消息可能尚未发酵或被市场忽视，可提前潜伏。<br>' +
-    '<b>资金驱动（橙标）</b>：无实质性政策/产业消息的板块异动，纯资金和情绪驱动，持续性较差，不追高。<br>' +
-    '<b>使用方法</b>：优先关注「已验证」的消息驱动板块（政策+资金共振），其次关注「待验证」的潜在催化机会，回避纯资金驱动的一日游行情。' +
+    '<b>数据来源</b>：新浪财经7x24实时快讯，每轮刷新自动获取最新30条。<br>' +
+    '<b>关联方法</b>：①匹配涨停股名称（含核心词）→标注「关联涨停」；②关键词映射影响板块→与今日涨幅前15、涨停行业前10做匹配。<br>' +
+    '<b>排序规则</b>：关联涨停股 > 影响板块已验证 > 政策类 > 产业类 > 其他。<br>' +
+    '<b>已验证（红标）</b>：影响板块出现在今日强势榜中，消息已转化为实际资金行为。<br>' +
+    '<b>待验证（灰标）</b>：影响板块尚未出现在强势榜中，消息可能尚未发酵，可提前潜伏。<br>' +
+    '<b>资金驱动（橙标）</b>：无实质性消息的板块异动，纯资金和情绪驱动，持续性差。' +
     '</div></details>';
   $('capPanel').style.display = '';
 }
