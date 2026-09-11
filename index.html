@@ -884,20 +884,19 @@ function fetchIndexOv() {
 }
 /* 行业板块行情：po=1 涨幅榜 / po=0 跌幅榜 */
 function fetchSectors(po) {
-  return jsonp('https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=60&po=' + po +
+  return jsonp('https://push2delay.eastmoney.com/api/qt/clist/get?pn=1&pz=80&po=' + po +
     '&np=1&fltt=2&invt=2&fid=f3&fs=m:90+t:2+f:!50' +
     '&fields=f2,f3,f8,f12,f14,f62,f104,f105,f128,f141', 'cb');
 }
 /* 新浪行业板块（东财断连时的备用数据源，GBK编码，数据准确） */
 function fetchSectorsSina() {
-  return fetch('https://vip.stock.finance.sina.com.cn/q/view/newSinaHy.php')
-    .then(function (r) { return r.arrayBuffer(); })
-    .then(function (buf) {
-      var text = new TextDecoder('gbk').decode(buf);
-      var start = text.indexOf('{');
-      var end = text.lastIndexOf('}');
-      if (start < 0 || end < 0) return [];
-      var obj = JSON.parse(text.slice(start, end + 1));
+  return new Promise(function (resolve) {
+    var s = document.createElement('script');
+    s.charset = 'gbk';
+    s.src = 'https://vip.stock.finance.sina.com.cn/q/view/newSinaHy.php';
+    s.onload = function () {
+      var obj = window.S_Finance_bankuai_sinaindustry;
+      if (!obj) { resolve([]); return; }
       var arr = [];
       Object.keys(obj).forEach(function (k) {
         var parts = obj[k].split(',');
@@ -913,12 +912,15 @@ function fetchSectorsSina() {
           });
         }
       });
-      return arr;
-    }).catch(function () { return []; });
+      resolve(arr);
+    };
+    s.onerror = function () { resolve([]); };
+    document.head.appendChild(s);
+  });
 }
 /* 同花顺行业板块（东财断连时的第二备用源，GBK编码，分类更细，含主力净流入） */
 function fetchSectorsTHS() {
-  return fetch('http://q.10jqka.com.cn/thshy/', {
+  return fetch('https://q.10jqka.com.cn/thshy/', {
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
   })
     .then(function (r) { return r.arrayBuffer(); })
@@ -1233,18 +1235,24 @@ function loadAll() {
     if (rs[4]) S.lose = filterStocks((rs[4].data && rs[4].data.diff) || []);
     if (rs[5]) S.yzt = rs[5];
     if (rs[6]) S.ov = rs[6];
+    S.secUp = S.secUp || [];
+    S.secDn = S.secDn || [];
     if (rs[7]) S.secUp = (rs[7].data && rs[7].data.diff) || [];
     if (rs[8]) S.secDn = (rs[8].data && rs[8].data.diff) || [];
     // 东财板块榜断连时，优先用同花顺（分类更细+主力净流入），其次用新浪
     var thsSec = rs[16] || [];
     var sinaSec = rs[15] || [];
     var backupSec = thsSec.length ? thsSec : sinaSec;
-    if ((!S.secUp.length || !S.secDn.length) && backupSec.length) {
+    var emSecBroken = !S.secUp || !S.secUp.length || !S.secDn || !S.secDn.length;
+    if (emSecBroken && backupSec.length) {
       var sorted = backupSec.slice().sort(function (a, b) { return b.f3 - a.f3; });
-      if (!S.secUp.length) S.secUp = sorted.slice(0, 50);
-      if (!S.secDn.length) S.secDn = sorted.slice().reverse().slice(0, 50);
+      S.secUp = sorted.slice(0, 50);
+      S.secDn = sorted.slice().reverse().slice(0, 50);
       S.sinaSec = !thsSec.length;
       S.thsSec = !!thsSec.length;
+    } else if (!emSecBroken) {
+      S.sinaSec = false;
+      S.thsSec = false;
     } else {
       S.sinaSec = false;
       S.thsSec = false;
@@ -3351,12 +3359,19 @@ function renderCap() {
   }
   $('capCards').innerHTML = cards.join('');
   var secDegraded = !(S.secUp || []).length && !(S.secDn || []).length;
-  var secAll = secDegraded ? deriveSectors() : (S.secUp || []).concat(S.secDn || []);
+  // 备用数据源（新浪/同花顺）下 S.secUp 和 S.secDn 是同一份数据正反排序，需去重
+  var rawSec = secDegraded ? deriveSectors() : (S.secUp || []).concat(S.secDn || []);
+  var seen = {};
+  var secAll = rawSec.filter(function (x) {
+    if (seen[x.f14]) return false;
+    seen[x.f14] = true;
+    return true;
+  });
   var useSina = S.sinaSec === true;
   var useTHS = S.thsSec === true;
   // 同花顺有主力净流入(f62)，新浪无f62用成交额(f6)代理
   var fundKey = useSina ? 'f6' : 'f62';
-  var fundLabel = useSina ? '成交额 TOP10（新浪行业）' : (useTHS ? '主力资金净流入 TOP10（同花顺行业）' : '主力资金净流入 TOP10');
+  var fundLabel = '主力资金净流入 TOP10';
   var fundTop = secAll.filter(function (x) { return isFinite(x[fundKey]); })
     .sort(function (a, b) { return b[fundKey] - a[fundKey]; }).slice(0, 10);
   var pctTop = secAll.slice().sort(function (a, b) { return b.f3 - a.f3; }).slice(0, 10);
@@ -3364,7 +3379,7 @@ function renderCap() {
   var pendLi = '<li style="color:var(--muted);border:none">数据源暂不可用，自动重试中…</li>';
   var degTag = secDegraded ? ' <span class="hint" style="font-size:10px">（行业降级）</span>' :
     (useTHS ? ' <span class="hint" style="font-size:10px">（同花顺行业·含主力净流入）</span>' :
-    (useSina ? ' <span class="hint" style="font-size:10px">（新浪行业·49类）</span>' : ''));
+    (useSina ? ' <span class="hint" style="font-size:10px">（新浪行业·成交额代理）</span>' : ''));
   $('capRow').innerHTML =
     colHtml(fundLabel + degTag, fundTop.length ? fundTop.map(function (x, i) {
       var val = useSina ? fmtMoney(x.f6) : fmtBig(x.f62);
