@@ -472,6 +472,7 @@ footer b{color:#c3cdd9}
 .news-item.has-stock{background:#f0453a08;border-left:3px solid #f0453a;padding-left:8px;border-radius:0 4px 4px 0}
 .news-stocks{margin-top:4px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:11px;color:var(--muted)}
 .news-stock-tag{background:#f0453a22;color:#f0453a;border:1px solid #f0453a55;border-radius:4px;padding:1px 7px;font-weight:600}
+.news-sector-tag{background:#f5a52422;color:#f5a524;border:1px solid #f5a52455;border-radius:4px;padding:1px 7px;font-weight:600}
 .news-content{flex:1}
 .news-title{color:#e2e8f0;display:flex;justify-content:space-between;align-items:center}
 .news-time{font-size:11px;color:#64748b;font-weight:400;flex-shrink:0;margin-left:8px}
@@ -552,6 +553,21 @@ footer b{color:#c3cdd9}
     <div class="yzt-deep" id="yztDeep"></div>
   </section>
 
+  <section class="panel" id="moodPanel" style="display:none">
+    <div class="panel-head">
+      <h2>情绪周期分析</h2>
+      <span class="hint">基于涨停/连板/晋级率/封板率/跌停/涨跌比的加权情绪模型 · 每轮刷新自动判定阶段</span>
+    </div>
+    <div class="mood-grid">
+      <div class="mood-stage" id="moodStage"></div>
+      <div class="mood-right">
+        <div class="mood-chart"><div class="chart-title">当日情绪指数走势</div><div class="chart" id="chartMood" style="height:190px"></div></div>
+        <div id="moodScore"></div>
+      </div>
+    </div>
+    <details class="mood-logic" id="moodLogic"></details>
+  </section>
+
   <section class="panel" id="indexPanel" style="display:none">
     <div class="panel-head">
       <h2>主要指数实时涨跌幅</h2>
@@ -567,21 +583,6 @@ footer b{color:#c3cdd9}
       <span class="hint">连板数/代码/名称/封板时间/涨停原因 · 参考同花顺涨停复盘模式</span>
     </div>
     <div class="zt-review" id="ztReview"></div>
-  </section>
-
-  <section class="panel" id="moodPanel" style="display:none">
-    <div class="panel-head">
-      <h2>情绪周期分析</h2>
-      <span class="hint">基于涨停/连板/晋级率/封板率/跌停/涨跌比的加权情绪模型 · 每轮刷新自动判定阶段</span>
-    </div>
-    <div class="mood-grid">
-      <div class="mood-stage" id="moodStage"></div>
-      <div class="mood-right">
-        <div class="mood-chart"><div class="chart-title">当日情绪指数走势</div><div class="chart" id="chartMood" style="height:190px"></div></div>
-        <div id="moodScore"></div>
-      </div>
-    </div>
-    <details class="mood-logic" id="moodLogic"></details>
   </section>
 
   <section class="panel" id="capPanel" style="display:none">
@@ -3095,13 +3096,12 @@ function calcNewsCatalyst() {
     var type = '产业';
     if (/政策|监管|部门|印发|通知|规划|会议|发改委|工信部|财政部|央行|国务院|证监会|金融监管/.test(n.title)) type = '政策';
     if (/公司|公告|业绩|增持|减持|回购|中标|签约|订单/.test(n.title)) type = '公司';
-    // 匹配涨停股
+    // 匹配涨停股名称（含核心词）
     var matchedStocks = [];
     ztNames.forEach(function (name) {
       if (n.title.indexOf(name) >= 0) {
         var fullName = ztNameMap[name] ? name : null;
         if (!fullName) {
-          // 核心词匹配，找对应的完整名称
           for (var fn in ztNameMap) {
             if (fn.indexOf(name) >= 0) { fullName = fn; break; }
           }
@@ -3109,18 +3109,33 @@ function calcNewsCatalyst() {
         if (fullName && matchedStocks.indexOf(fullName) < 0) matchedStocks.push(fullName);
       }
     });
-    return { type: type, title: n.title, time: n.time, sectors: sectors, matchedStocks: matchedStocks, noNews: sectors.length === 0 && matchedStocks.length === 0 };
+    // 匹配涨停行业：快讯影响板块中有涨停股的行业
+    var matchedZtSectors = [];
+    sectors.forEach(function (sec) {
+      if (ztBy[sec]) {
+        matchedZtSectors.push({ name: sec, count: ztBy[sec] });
+      }
+    });
+    // 反向匹配：涨停股所属行业名称出现在快讯标题中
+    Object.keys(ztBy).forEach(function (sec) {
+      if (n.title.indexOf(sec) >= 0 && sectors.indexOf(sec) < 0) {
+        if (matchedZtSectors.filter(function (x) { return x.name === sec; }).length === 0) {
+          matchedZtSectors.push({ name: sec, count: ztBy[sec] });
+        }
+      }
+    });
+    return { type: type, title: n.title, time: n.time, sectors: sectors, matchedStocks: matchedStocks, matchedZtSectors: matchedZtSectors, noNews: sectors.length === 0 && matchedStocks.length === 0 && matchedZtSectors.length === 0 };
   });
-  // 优先排序：有涨停股匹配 > 有强势板块关联 > 政策 > 产业 > 其他
+  // 优先排序：直接匹配涨停股 > 关联涨停行业 > 影响板块已验证 > 政策 > 产业 > 其他
   news.sort(function (a, b) {
-    var sa = (a.matchedStocks.length > 0 ? 2 : 0) + (a.sectors.length > 0 ? 1 : 0) + (a.type === '政策' ? 0.5 : 0);
-    var sb = (b.matchedStocks.length > 0 ? 2 : 0) + (b.sectors.length > 0 ? 1 : 0) + (b.type === '政策' ? 0.5 : 0);
+    var sa = (a.matchedStocks.length > 0 ? 3 : 0) + (a.matchedZtSectors.length > 0 ? 2 : 0) + (a.sectors.length > 0 ? 1 : 0) + (a.type === '政策' ? 0.5 : 0);
+    var sb = (b.matchedStocks.length > 0 ? 3 : 0) + (b.matchedZtSectors.length > 0 ? 2 : 0) + (b.sectors.length > 0 ? 1 : 0) + (b.type === '政策' ? 0.5 : 0);
     return sb - sa;
   });
   news = news.slice(0, 15);
   // 如果实时新闻为空，显示提示
   if (!news.length) {
-    news = [{ type: '提示', title: '快讯加载中或非交易时段，稍后自动刷新…', sectors: [], matchedStocks: [], noNews: true }];
+    news = [{ type: '提示', title: '快讯加载中或非交易时段，稍后自动刷新…', sectors: [], matchedStocks: [], matchedZtSectors: [], noNews: true }];
   }
   // 关联分析
   var items = news.map(function (n) {
@@ -3135,12 +3150,13 @@ function calcNewsCatalyst() {
       };
     });
     var verifiedCount = sectorInfo.filter(function (x) { return x.verified; }).length;
-    return { type: n.type, title: n.title, time: n.time, sectors: sectorInfo, matchedStocks: n.matchedStocks || [], verifiedCount: verifiedCount, noNews: n.noNews };
+    return { type: n.type, title: n.title, time: n.time, sectors: sectorInfo, matchedStocks: n.matchedStocks || [], matchedZtSectors: n.matchedZtSectors || [], verifiedCount: verifiedCount, noNews: n.noNews };
   });
   var verifiedTotal = items.reduce(function (sum, x) { return sum + x.verifiedCount; }, 0);
   var totalSectors = items.reduce(function (sum, x) { return sum + x.sectors.length; }, 0);
   var stockMatchCount = items.reduce(function (sum, x) { return sum + (x.matchedStocks ? x.matchedStocks.length : 0); }, 0);
-  return { items: items, verifiedTotal: verifiedTotal, totalSectors: totalSectors, stockMatchCount: stockMatchCount };
+  var ztSectorMatchCount = items.reduce(function (sum, x) { return sum + (x.matchedZtSectors ? x.matchedZtSectors.length : 0); }, 0);
+  return { items: items, verifiedTotal: verifiedTotal, totalSectors: totalSectors, stockMatchCount: stockMatchCount, ztSectorMatchCount: ztSectorMatchCount };
 }
 /* 昨日涨停深度分析辅助函数 */
 function ydConclusionText(yd) {
@@ -3712,21 +3728,29 @@ function renderCap() {
       return '<span class="news-sector ' + cls + '">' + s.name + pct + badge + '</span>';
     }).join('');
     var stocksHtml = (n.matchedStocks && n.matchedStocks.length) ?
-      '<div class="news-stocks">关联涨停：' + n.matchedStocks.map(function (s) {
+      '<div class="news-stocks">关联涨停股：' + n.matchedStocks.map(function (s) {
         return '<span class="news-stock-tag">' + esc(s) + '</span>';
       }).join('') + '</div>' : '';
-    return '<div class="news-item' + (n.matchedStocks && n.matchedStocks.length ? ' has-stock' : '') + '"><span class="news-tag ' + tagCls + '">' + n.type + '</span>' +
+    var ztSecHtml = (n.matchedZtSectors && n.matchedZtSectors.length) ?
+      '<div class="news-stocks">关联涨停行业：' + n.matchedZtSectors.map(function (s) {
+        return '<span class="news-sector-tag">' + esc(s.name) + '(' + s.count + '家)</span>';
+      }).join('') + '</div>' : '';
+    var hasMatch = (n.matchedStocks && n.matchedStocks.length) || (n.matchedZtSectors && n.matchedZtSectors.length);
+    return '<div class="news-item' + (hasMatch ? ' has-stock' : '') + '"><span class="news-tag ' + tagCls + '">' + n.type + '</span>' +
       '<div class="news-content"><div class="news-title">' + esc(n.title) + (n.time ? '<span class="news-time">' + n.time.slice(11, 16) + '</span>' : '') + '</div>' +
-      (sectorsHtml ? '<div class="news-sectors">影响：' + sectorsHtml + '</div>' : '') + stocksHtml + '</div></div>';
+      (sectorsHtml ? '<div class="news-sectors">影响：' + sectorsHtml + '</div>' : '') + stocksHtml + ztSecHtml + '</div></div>';
   }).join('');
   $('newsCatalyst').innerHTML =
     '<div class="sp-head"><span class="sp-title">消息面 / 政策催化速览</span>' +
-    '<span class="hint">实时快讯（新浪7x24）· 自动关联涨停股与板块异动 · 匹配涨停股 ' + nc.stockMatchCount + ' 次 · ' + nc.verifiedTotal + '/' + nc.totalSectors + ' 个影响板块已验证</span></div>' +
+    '<span class="hint">实时快讯（新浪7x24）· 关联涨停股 ' + nc.stockMatchCount + ' 次 · 关联涨停行业 ' + nc.ztSectorMatchCount + ' 个 · ' + nc.verifiedTotal + '/' + nc.totalSectors + ' 个影响板块已验证</span></div>' +
     '<div class="news-list">' + newsHtml + '</div>' +
     '<details class="mood-logic"><summary>查看消息面分析逻辑</summary><div class="sp-logic">' +
     '<b>数据来源</b>：新浪财经7x24实时快讯，每轮刷新自动获取最新30条。<br>' +
-    '<b>关联方法</b>：①匹配涨停股名称（含核心词）→标注「关联涨停」；②关键词映射影响板块→与今日涨幅前15、涨停行业前10做匹配。<br>' +
-    '<b>排序规则</b>：关联涨停股 > 影响板块已验证 > 政策类 > 产业类 > 其他。<br>' +
+    '<b>关联方法（三级匹配）</b>：<br>' +
+    '①<strong>直接匹配涨停股名称</strong>（含核心词提取）→红色「关联涨停股」标签，优先级最高；<br>' +
+    '②<strong>关联涨停行业</strong>：快讯影响板块中有涨停股，或涨停行业名称直接出现在标题中→橙色「关联涨停行业」标签；<br>' +
+    '③<strong>关键词映射影响板块</strong>→与今日涨幅前15、涨停行业前10做匹配，已验证红标/待验证灰标。<br>' +
+    '<b>排序规则</b>：直接匹配涨停股 > 关联涨停行业 > 影响板块已验证 > 政策类 > 产业类 > 其他。<br>' +
     '<b>已验证（红标）</b>：影响板块出现在今日强势榜中，消息已转化为实际资金行为。<br>' +
     '<b>待验证（灰标）</b>：影响板块尚未出现在强势榜中，消息可能尚未发酵，可提前潜伏。<br>' +
     '<b>资金驱动（橙标）</b>：无实质性消息的板块异动，纯资金和情绪驱动，持续性差。' +
@@ -3903,9 +3927,9 @@ function renderAll() {
   renderOverview();
   renderMorningFlow();
   renderYztDeep();
+  renderEmotion();
   renderIndexChart();
   renderZtReview();
-  renderEmotion();
   renderCap();
   renderCharts();
   renderCapCharts();
