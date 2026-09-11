@@ -592,13 +592,13 @@ footer b{color:#c3cdd9}
     </div>
     <div class="cap-row" id="capRow"></div>
     <div class="mainline" id="mainLine"></div>
+    <div class="sector-grades" id="sectorGrades"></div>
+    <div class="linkage-panel" id="linkagePanel"></div>
+    <div class="rotation-track" id="rotationTrack"></div>
     <div class="fund-timeline" id="secFundTimelinePanel" style="display:none">
       <div class="sp-head"><span class="sp-title">涨停前5板块资金流向（30分钟间隔）</span><span class="hint">快照差值法 · 板块主力净流入增量 · 非分钟级精确累加</span></div>
       <div id="secFundTimeline"></div>
     </div>
-    <div class="sector-grades" id="sectorGrades"></div>
-    <div class="linkage-panel" id="linkagePanel"></div>
-    <div class="rotation-track" id="rotationTrack"></div>
     <div class="cross-analysis" id="crossAnalysis"></div>
     <div class="stock-pick" id="stockPick"></div>
     <div class="lhb-track" id="lhbTrack"></div>
@@ -3232,8 +3232,8 @@ function recordSecFundHistory() {
 function renderSecFundTimeline() {
   var el = $('secFundTimeline');
   if (!el) return;
-  if (!S.secFundHistory || S.secFundHistory.length < 2) {
-    el.innerHTML = '<div class="sp-logic" style="color:var(--muted)">正在积累数据…需至少2次刷新（间隔≥30秒）后显示30分钟变化</div>';
+  if (!S.secFundHistory || !S.secFundHistory.length) {
+    el.innerHTML = '<div class="sp-logic" style="color:var(--muted)">资金流向数据加载中…</div>';
     return;
   }
   // 按30分钟分组，取每个时段最后一条记录
@@ -3253,8 +3253,8 @@ function renderSecFundTimeline() {
     var recs = S.secFundHistory.filter(function (r) { return r.time >= slot.start && r.time < slot.end; });
     if (recs.length) snapshots.push({ label: slot.label, data: recs[recs.length - 1] });
   });
-  if (snapshots.length < 2) {
-    el.innerHTML = '<div class="sp-logic" style="color:var(--muted)">数据积累中…当前时段：' + (snapshots.length ? snapshots[0].label : '无') + '，需跨时段后显示增量</div>';
+  if (!snapshots.length) {
+    el.innerHTML = '<div class="sp-logic" style="color:var(--muted)">非交易时段，暂无数据</div>';
     return;
   }
   // 获取所有出现过的板块（取最新快照的前5）
@@ -3281,7 +3281,7 @@ function renderSecFundTimeline() {
         if (prevSec && prevSec.fund != null) delta = curFund - prevSec.fund;
       }
       if (delta != null) {
-        var deltaYi = delta / 1e8; // 元→亿
+        var deltaYi = delta / 1e8;
         var cls = deltaYi >= 0 ? 'up-txt' : 'down-txt';
         html += '<td class="' + cls + '">' + (deltaYi >= 0 ? '+' : '') + deltaYi.toFixed(2) + '亿</td>';
       } else if (curFund != null) {
@@ -3299,7 +3299,7 @@ function renderSecFundTimeline() {
 function renderCap() {
   // 涨停前5板块资金流向统计
   renderSecFundTimeline();
-  if (S.secFundHistory && S.secFundHistory.length >= 2) $('secFundTimelinePanel').style.display = '';
+  if (S.secFundHistory && S.secFundHistory.length >= 1) $('secFundTimelinePanel').style.display = '';
   var ov = S.capOv;
   var cards = [];
   if (ov) {
