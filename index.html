@@ -3019,45 +3019,46 @@ function renderYztDeep() {
         '<div class="yd-val ' + (cls || '') + '">' + val + '</div>' +
         (sub ? '<div class="yd-sub">' + sub + '</div>' : '') + '</div>';
     }
-    var bigMianTxt = yd.bigMianRate != null ? (yd.bigMianRate * 100).toFixed(1) + '%' : '--';
-    var weakMianTxt = yd.weakMianRate != null ? (yd.weakMianRate * 100).toFixed(1) + '%' : '--';
-    var heAnTxt = yd.heAnRate != null ? (yd.heAnRate * 100).toFixed(1) + '%' : '--';
-    var lowOpenTxt = yd.lowOpenRate != null ? (yd.lowOpenRate * 100).toFixed(1) + '%' : '--';
-    var avgOpenTxt = yd.avgOpenPremium != null ? ((yd.avgOpenPremium >= 0 ? '+' : '') + yd.avgOpenPremium.toFixed(2) + '%') : '--';
+    var n = yd.n || 1;
+    var bigMianTxt = yd.bigMianRate != null ? yd.bigMianRate.toFixed(1) + '%' : '--';
+    var weakMianTxt = yd.weakMian != null ? (yd.weakMian / n * 100).toFixed(1) + '%' : '--';
+    var heAnTxt = yd.heAnniu != null ? (yd.heAnniu / n * 100).toFixed(1) + '%' : '--';
+    var lowOpenTxt = yd.lowOpenRate != null ? yd.lowOpenRate.toFixed(1) + '%' : '--';
+    var avgOpenTxt = yd.avgOpenPrem != null ? ((yd.avgOpenPrem >= 0 ? '+' : '') + yd.avgOpenPrem.toFixed(2) + '%') : '--';
     var medianTxt = yd.median != null ? ((yd.median >= 0 ? '+' : '') + yd.median.toFixed(2) + '%') : '--';
     var avgTxt = yd.avgChg != null ? ((yd.avgChg >= 0 ? '+' : '') + yd.avgChg.toFixed(2) + '%') : '--';
-    var jinjiTxt = yd.jinjiRate != null ? (yd.jinjiRate * 100).toFixed(1) + '%' : '--';
-    var redTxt = yd.redRate != null ? (yd.redRate * 100).toFixed(1) + '%' : '--';
-    var lhTxt = yd.lhPremium != null ? ((yd.lhPremium >= 0 ? '+' : '') + yd.lhPremium.toFixed(2) + '%') : '--';
+    var jinjiTxt = yd.jinjiRate != null ? yd.jinjiRate.toFixed(1) + '%' : '--';
+    var redTxt = yd.redRate != null ? yd.redRate.toFixed(1) + '%' : '--';
+    var lhTxt = yd.lanbanAvg != null ? ((yd.lanbanAvg >= 0 ? '+' : '') + yd.lanbanAvg.toFixed(2) + '%') : '--';
     var dbTxt = yd.duanbanAvg != null ? ((yd.duanbanAvg >= 0 ? '+' : '') + yd.duanbanAvg.toFixed(2) + '%') : '--';
-    var dbMianTxt = yd.duanbanBigMian != null ? (yd.duanbanBigMian * 100).toFixed(1) + '%' : '--';
-    var dtCount = yd.dtCount || 0;
-    var moodCls = yd.mood === '强' ? 'up' : (yd.mood === '弱' ? 'down' : '');
-    var ydRows = (yd.detailList || []).map(function (x) {
-      return '<tr><td>' + esc(x.n) + '</td><td>' + x.code + '</td>' +
-        '<td class="' + (x.pct >= 0 ? 'up' : 'down') + '">' + (x.pct >= 0 ? '+' : '') + x.pct.toFixed(2) + '%</td>' +
-        '<td>' + (x.lbc || 1) + '板</td>' +
-        '<td>' + (x.isLimitUp ? '<span style="color:#f0453a">涨停</span>' : (x.pct <= -7 ? '<span style="color:#10b981">大面</span>' : '—')) + '</td>' +
+    var dbMianTxt = yd.duanbanCount ? (yd.duanbanBigMian / yd.duanbanCount * 100).toFixed(1) + '%' : '--';
+    var dtCount = yd.limitDown || 0;
+    var moodCls = yd.mood && yd.mood.indexOf('主升') >= 0 ? 'up' : (yd.mood && yd.mood.indexOf('退潮') >= 0 ? 'down' : '');
+    var ydRows = (yd.detail || []).map(function (x) {
+      return '<tr><td>' + esc(x.name) + '</td><td>' + x.code + '</td>' +
+        '<td class="' + (x.chg >= 0 ? 'up' : 'down') + '">' + (x.chg >= 0 ? '+' : '') + x.chg.toFixed(2) + '%</td>' +
+        '<td>' + (x.yLbc || 1) + '板</td>' +
+        '<td>' + (x.isLimitUp ? '<span style="color:#f0453a">涨停</span>' : (x.chg <= -7 ? '<span style="color:#10b981">大面</span>' : '—')) + '</td>' +
         '<td>' + esc(x.hybk || '—') + '</td></tr>';
     }).join('');
     $('yztDeep').innerHTML =
       '<div class="yd-grid">' +
-      ydCard('晋级率', jinjiTxt, '连板接力意愿', yd.jinjiRate >= 0.35 ? 'up' : (yd.jinjiRate < 0.2 ? 'down' : '')) +
+      ydCard('晋级率', jinjiTxt, '连板接力意愿', yd.jinjiRate >= 35 ? 'up' : (yd.jinjiRate < 20 ? 'down' : '')) +
       ydCard('平均涨幅', avgTxt, '打板隔夜盈亏', yd.avgChg >= 2 ? 'up' : (yd.avgChg < 0 ? 'down' : '')) +
       ydCard('中位数涨幅', medianTxt, '消除妖股失真', yd.median >= 0 ? 'up' : 'down') +
-      ydCard('红盘率', redTxt, '上涨占比', yd.redRate >= 0.6 ? 'up' : (yd.redRate < 0.4 ? 'down' : '')) +
-      ydCard('大面率(≤-7%)', bigMianTxt, '亏钱杀伤力核心', yd.bigMianRate >= 0.2 ? 'down' : (yd.bigMianRate < 0.1 ? 'up' : '')) +
+      ydCard('红盘率', redTxt, '上涨占比', yd.redRate >= 60 ? 'up' : (yd.redRate < 40 ? 'down' : '')) +
+      ydCard('大面率(≤-7%)', bigMianTxt, '亏钱杀伤力核心', yd.bigMianRate >= 20 ? 'down' : (yd.bigMianRate < 10 ? 'up' : '')) +
       ydCard('弱面率(-5~-7%)', weakMianTxt, '轻度亏钱', '') +
-      ydCard('核按钮(≤-10%)', heAnTxt, '极端杀跌', yd.heAnRate > 0 ? 'down' : '') +
-      ydCard('低开率', lowOpenTxt, '隔夜资金抢跑', yd.lowOpenRate >= 0.5 ? 'down' : 'up') +
-      ydCard('竞价平均溢价', avgOpenTxt, '9:25资金真实预期', yd.avgOpenPremium >= 1.5 ? 'up' : (yd.avgOpenPremium < 0 ? 'down' : '')) +
-      ydCard('烂板次日溢价', lhTxt, '差板包容度', yd.lhPremium >= 0 ? 'up' : 'down') +
+      ydCard('核按钮(≤-10%)', heAnTxt, '极端杀跌', yd.heAnniu > 0 ? 'down' : '') +
+      ydCard('低开率', lowOpenTxt, '隔夜资金抢跑', yd.lowOpenRate >= 50 ? 'down' : 'up') +
+      ydCard('竞价平均溢价', avgOpenTxt, '9:25资金真实预期', yd.avgOpenPrem >= 1.5 ? 'up' : (yd.avgOpenPrem < 0 ? 'down' : '')) +
+      ydCard('烂板次日溢价', lhTxt, '差板包容度', yd.lanbanAvg >= 0 ? 'up' : 'down') +
       ydCard('断板股平均', dbTxt, '高位分歧态度', yd.duanbanAvg >= 0 ? 'up' : 'down') +
-      ydCard('断板大面率', dbMianTxt, 'A杀风险', yd.duanbanBigMian >= 0.3 ? 'down' : '') +
+      ydCard('断板大面率', dbMianTxt, 'A杀风险', (yd.duanbanBigMian / (yd.duanbanCount || 1) * 100) >= 30 ? 'down' : '') +
       '</div>' +
-      '<div class="yd-conclusion"><b>综合判定：</b>' + esc(yd.conclusion) +
+      '<div class="yd-conclusion"><b>综合判定：</b>' + esc(yd.mood || '') + ' — ' + esc(yd.moodAction || '') +
       (dtCount > 0 ? ' · 昨涨停今日跌停 <b style="color:#10b981">' + dtCount + '</b> 只（核按钮）' : '') + '</div>' +
-      '<details class="mood-logic"><summary>查看昨涨停个股明细（' + (yd.detailList || []).length + '只）</summary>' +
+      '<details class="mood-logic"><summary>查看昨涨停个股明细（' + (yd.detail || []).length + '只）</summary>' +
       '<div class="yd-detail"><table class="score-table"><thead><tr><th>名称</th><th>代码</th><th>今日涨跌</th><th>连板</th><th>状态</th><th>行业</th></tr></thead>' +
       '<tbody>' + ydRows + '</tbody></table></div></details>' +
       '<details class="mood-logic"><summary>查看指标体系与阈值</summary><div class="sp-logic">' +
