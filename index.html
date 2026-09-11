@@ -586,16 +586,16 @@ footer b{color:#c3cdd9}
       <span class="hint">实时成交额（沪深分钟K线口径）· 10日涨幅与活跃股行业分布 · 板块资金/涨幅/涨停三榜 · 主线判定</span>
     </div>
     <div class="cap-cards" id="capCards"></div>
-    <div class="fund-timeline" id="fundTimelinePanel" style="display:none">
-      <div class="sp-head"><span class="sp-title">盘中资金流向（30分钟间隔）</span><span class="hint">沪深两市汇总 · 主力/超大单/大单 · 实时更新</span></div>
-      <div id="fundTimeline"></div>
-    </div>
     <div class="chart-grid">
       <div class="chart-card"><div class="chart-title">10日涨幅前100 · 行业分布</div><div class="chart" id="chart6" style="height:280px"></div></div>
       <div class="chart-card"><div class="chart-title">成交额&gt;10亿个股 · 行业分布</div><div class="chart" id="chart7" style="height:280px"></div></div>
     </div>
     <div class="cap-row" id="capRow"></div>
     <div class="mainline" id="mainLine"></div>
+    <div class="fund-timeline" id="secFundTimelinePanel" style="display:none">
+      <div class="sp-head"><span class="sp-title">涨停前5板块资金流向（30分钟间隔）</span><span class="hint">快照差值法 · 板块主力净流入增量 · 非分钟级精确累加</span></div>
+      <div id="secFundTimeline"></div>
+    </div>
     <div class="sector-grades" id="sectorGrades"></div>
     <div class="linkage-panel" id="linkagePanel"></div>
     <div class="rotation-track" id="rotationTrack"></div>
@@ -873,38 +873,6 @@ function fetchKline(secid, klt, lmt) {
   return jsonp('https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=' + secid +
     '&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=' + klt +
     '&fqt=1&end=20500101&lmt=' + lmt, 'cb');
-}
-/* 分钟级资金流向（沪深两市汇总）：用于30分钟间隔统计 */
-function fetchFundFlow() {
-  var fields = 'f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65';
-  var pSh = jsonp('https://push2.eastmoney.com/api/qt/stock/fflow/kline/get?lmt=0&klt=1&fields1=f1,f2,f3,f7&fields2=' + fields + '&secid=1.000001', 'cb')
-    .then(function (r) { return (r && r.data && r.data.klines) || []; })
-    .catch(function () { return []; });
-  var pSz = jsonp('https://push2.eastmoney.com/api/qt/stock/fflow/kline/get?lmt=0&klt=1&fields1=f1,f2,f3,f7&fields2=' + fields + '&secid=0.399001', 'cb')
-    .then(function (r) { return (r && r.data && r.data.klines) || []; })
-    .catch(function () { return []; });
-  return Promise.all([pSh, pSz]).then(function (rs) {
-    var map = {};
-    function parse(lines) {
-      lines.forEach(function (line) {
-        var p = line.split(',');
-        if (p.length < 6) return;
-        var t = p[0]; // 2026-09-11 09:31
-        var main = parseFloat(p[1]) || 0; // 主力净流入
-        var superLarge = parseFloat(p[5]) || 0; // 超大单
-        var large = parseFloat(p[4]) || 0; // 大单
-        if (!map[t]) map[t] = { main: 0, superLarge: 0, large: 0 };
-        map[t].main += main;
-        map[t].superLarge += superLarge;
-        map[t].large += large;
-      });
-    }
-    parse(rs[0]);
-    parse(rs[1]);
-    return Object.keys(map).sort().map(function (t) {
-      return { time: t, main: map[t].main, superLarge: map[t].superLarge, large: map[t].large };
-    });
-  });
 }
 function fetchIndexOv() {
   return jsonp('https://push2.eastmoney.com/api/qt/ulist.np/get?secids=1.000001,0.399001' +
@@ -1252,9 +1220,8 @@ function loadAll() {
   var pHot = fetchHotRank().then(function (list) { return fetchHotDetail(list); }).catch(function () { return []; });
   var pIndex = safe(function () { return fetchIndexData(); }, '指数行情');
   var pNews = fetchNews().catch(function () { return []; });
-  var pFund = fetchFundFlow().catch(function () { return []; });
 
-  Promise.all([pZt, pZb, pDt, pG, pL, pYzt, pOv, pSecUp, pSecDn, pSpd, pVr, pCap1, pCap2, pBig, pHot, pSecSina, pSecTHS, pIndex, pNews, pFund]).then(function (rs) {
+  Promise.all([pZt, pZb, pDt, pG, pL, pYzt, pOv, pSecUp, pSecDn, pSpd, pVr, pCap1, pCap2, pBig, pHot, pSecSina, pSecTHS, pIndex, pNews]).then(function (rs) {
     if (rs[0]) S.zt = rs[0];
     if (rs[1]) S.zb = rs[1];
     if (rs[2]) S.dt = rs[2];
@@ -1299,10 +1266,8 @@ function loadAll() {
     if (rs[18] && rs[18].length) {
       S.newsList = rs[18];
     }
-    // 分钟级资金流向
-    if (rs[19] && rs[19].length) {
-      S.fundFlow = rs[19];
-    }
+    // 记录涨停前5板块资金流向历史
+    recordSecFundHistory();
     // 昨日涨停 → 今日行情
     var codes = S.yzt.map(function (x) { return x.c; });
     return fetchTencentQuotes(codes).then(function (q) {
@@ -3241,14 +3206,37 @@ function renderYztDeep() {
   }
 }
 /* 30分钟间隔资金流向统计 */
-function renderFundTimeline() {
-  var el = $('fundTimeline');
+/* 涨停前5板块资金流向历史记录（快照差值法） */
+function recordSecFundHistory() {
+  if (!S.zt || !S.zt.length) return;
+  // 统计涨停前5板块
+  var ztBy = {};
+  S.zt.forEach(function (x) { if (x.hybk) ztBy[x.hybk] = (ztBy[x.hybk] || 0) + 1; });
+  var top5 = Object.keys(ztBy).sort(function (a, b) { return ztBy[b] - ztBy[a]; }).slice(0, 5);
+  // 从板块数据查找主力净流入
+  var secAll = (S.secUp || []).concat(S.secDn || []);
+  var fundMap = {};
+  secAll.forEach(function (s) { if (s && s.f14) fundMap[s.f14] = s.f62; });
+  var now = new Date();
+  var hm = now.getHours() * 100 + now.getMinutes();
+  var record = { time: hm, sectors: [] };
+  top5.forEach(function (name) {
+    record.sectors.push({ name: name, ztCount: ztBy[name], fund: fundMap[name] != null ? fundMap[name] : null });
+  });
+  if (!S.secFundHistory) S.secFundHistory = [];
+  S.secFundHistory.push(record);
+  // 只保留最近100条记录
+  if (S.secFundHistory.length > 100) S.secFundHistory = S.secFundHistory.slice(-100);
+}
+/* 涨停前5板块30分钟资金流向统计 */
+function renderSecFundTimeline() {
+  var el = $('secFundTimeline');
   if (!el) return;
-  if (!S.fundFlow || !S.fundFlow.length) {
-    el.innerHTML = '<div class="sp-logic" style="color:var(--muted)">资金流向数据加载中…</div>';
+  if (!S.secFundHistory || S.secFundHistory.length < 2) {
+    el.innerHTML = '<div class="sp-logic" style="color:var(--muted)">正在积累数据…需至少2次刷新（间隔≥30秒）后显示30分钟变化</div>';
     return;
   }
-  // 按30分钟分组：09:30-10:00, 10:00-10:30, 10:30-11:00, 11:00-11:30, 13:00-13:30, ...
+  // 按30分钟分组，取每个时段最后一条记录
   var slots = [
     { label: '09:30-10:00', start: 930, end: 1000 },
     { label: '10:00-10:30', start: 1000, end: 1030 },
@@ -3259,69 +3247,59 @@ function renderFundTimeline() {
     { label: '14:00-14:30', start: 1400, end: 1430 },
     { label: '14:30-15:00', start: 1430, end: 1500 }
   ];
-  var rows = [];
-  var totalMain = 0, totalSuper = 0, totalLarge = 0;
+  // 获取每个时段的快照（该时段内最后一条记录）
+  var snapshots = [];
   slots.forEach(function (slot) {
-    var main = 0, superLarge = 0, large = 0, count = 0;
-    S.fundFlow.forEach(function (f) {
-      // f.time 格式 "2026-09-11 09:31"
-      var hm = parseInt(f.time.slice(11, 13) + f.time.slice(14, 16));
-      if (hm >= slot.start && hm < slot.end) {
-        main += f.main;
-        superLarge += f.superLarge;
-        large += f.large;
-        count++;
-      }
-    });
-    if (count > 0) {
-      totalMain += main;
-      totalSuper += superLarge;
-      totalLarge += large;
-      rows.push({
-        label: slot.label,
-        main: main / 1e8, // 元→亿
-        superLarge: superLarge / 1e8,
-        large: large / 1e8,
-        count: count
-      });
-    }
+    var recs = S.secFundHistory.filter(function (r) { return r.time >= slot.start && r.time < slot.end; });
+    if (recs.length) snapshots.push({ label: slot.label, data: recs[recs.length - 1] });
   });
-  if (!rows.length) {
-    el.innerHTML = '<div class="sp-logic" style="color:var(--muted)">非交易时段，暂无资金流向数据</div>';
+  if (snapshots.length < 2) {
+    el.innerHTML = '<div class="sp-logic" style="color:var(--muted)">数据积累中…当前时段：' + (snapshots.length ? snapshots[0].label : '无') + '，需跨时段后显示增量</div>';
     return;
   }
-  var html = '<table class="fund-table"><thead><tr>' +
-    '<th>时间段</th><th>主力净流入(亿)</th><th>超大单(亿)</th><th>大单(亿)</th><th>净额</th>' +
-    '</tr></thead><tbody>';
-  rows.forEach(function (r) {
-    var mainCls = r.main >= 0 ? 'up-txt' : 'down-txt';
-    var superCls = r.superLarge >= 0 ? 'up-txt' : 'down-txt';
-    var largeCls = r.large >= 0 ? 'up-txt' : 'down-txt';
-    var netCls = r.main >= 0 ? 'up-txt' : 'down-txt';
-    var netLabel = r.main >= 0 ? '流入' : '流出';
-    html += '<tr>' +
-      '<td>' + r.label + '</td>' +
-      '<td class="' + mainCls + '">' + (r.main >= 0 ? '+' : '') + r.main.toFixed(2) + '</td>' +
-      '<td class="' + superCls + '">' + (r.superLarge >= 0 ? '+' : '') + r.superLarge.toFixed(2) + '</td>' +
-      '<td class="' + largeCls + '">' + (r.large >= 0 ? '+' : '') + r.large.toFixed(2) + '</td>' +
-      '<td class="' + netCls + '"><b>' + netLabel + '</b> ' + Math.abs(r.main).toFixed(2) + '亿</td>' +
-      '</tr>';
+  // 获取所有出现过的板块（取最新快照的前5）
+  var latest = snapshots[snapshots.length - 1].data;
+  var sectorNames = latest.sectors.map(function (s) { return s.name; });
+  // 构建表格：行=时段，列=板块
+  var html = '<table class="fund-table"><thead><tr><th>时间段</th>';
+  sectorNames.forEach(function (name) {
+    var ztCnt = latest.sectors.filter(function (s) { return s.name === name; })[0];
+    html += '<th>' + esc(name) + '<br><span style="font-weight:400;color:var(--muted)">(' + (ztCnt ? ztCnt.ztCount : 0) + '涨停)</span></th>';
   });
-  // 合计行
-  var totalCls = totalMain >= 0 ? 'up-txt' : 'down-txt';
-  html += '<tr style="background:var(--panel2);font-weight:700">' +
-    '<td>合计</td>' +
-    '<td class="' + totalCls + '">' + (totalMain >= 0 ? '+' : '') + totalMain.toFixed(2) + '</td>' +
-    '<td class="' + (totalSuper >= 0 ? 'up-txt' : 'down-txt') + '">' + (totalSuper >= 0 ? '+' : '') + totalSuper.toFixed(2) + '</td>' +
-    '<td class="' + (totalLarge >= 0 ? 'up-txt' : 'down-txt') + '">' + (totalLarge >= 0 ? '+' : '') + totalLarge.toFixed(2) + '</td>' +
-    '<td class="' + totalCls + '"><b>' + (totalMain >= 0 ? '净流入' : '净流出') + '</b> ' + Math.abs(totalMain).toFixed(2) + '亿</td>' +
-    '</tr></tbody></table>';
+  html += '</tr></thead><tbody>';
+  // 计算每个时段各板块的增量（当前快照值 - 上一时段快照值）
+  for (var i = 0; i < snapshots.length; i++) {
+    var snap = snapshots[i];
+    var prev = i > 0 ? snapshots[i - 1].data : null;
+    html += '<tr><td>' + snap.label + '</td>';
+    sectorNames.forEach(function (name) {
+      var cur = snap.data.sectors.filter(function (s) { return s.name === name; })[0];
+      var curFund = cur ? cur.fund : null;
+      var delta = null;
+      if (prev && curFund != null) {
+        var prevSec = prev.sectors.filter(function (s) { return s.name === name; })[0];
+        if (prevSec && prevSec.fund != null) delta = curFund - prevSec.fund;
+      }
+      if (delta != null) {
+        var deltaYi = delta / 1e8; // 元→亿
+        var cls = deltaYi >= 0 ? 'up-txt' : 'down-txt';
+        html += '<td class="' + cls + '">' + (deltaYi >= 0 ? '+' : '') + deltaYi.toFixed(2) + '亿</td>';
+      } else if (curFund != null) {
+        html += '<td style="color:var(--muted)">' + (curFund / 1e8).toFixed(2) + '亿*</td>';
+      } else {
+        html += '<td style="color:var(--muted)">—</td>';
+      }
+    });
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  html += '<div style="font-size:11px;color:var(--muted);margin-top:6px">* 首行显示当前累计主力净流入，后续行显示较上一时段的增量（快照差值法，非分钟级精确累加）</div>';
   el.innerHTML = html;
 }
 function renderCap() {
-  // 30分钟资金流向统计
-  renderFundTimeline();
-  if (S.fundFlow && S.fundFlow.length) $('fundTimelinePanel').style.display = '';
+  // 涨停前5板块资金流向统计
+  renderSecFundTimeline();
+  if (S.secFundHistory && S.secFundHistory.length >= 2) $('secFundTimelinePanel').style.display = '';
   var ov = S.capOv;
   var cards = [];
   if (ov) {
