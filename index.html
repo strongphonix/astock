@@ -104,6 +104,28 @@ section{scroll-margin-top:70px;}
 .c-ora{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.35);}
 .c-blu{background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.3);}
 .c-grn{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.3);}
+/* ---- 主线判定（三维标准）专用样式 ---- */
+.dim{background:#0f172a;border:1px solid var(--bd);border-radius:8px;padding:10px 12px;}
+.dim-h{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed var(--bd);padding-bottom:6px;margin-bottom:7px;gap:8px;}
+.dim-h b{font-size:12.5px;color:#fbbf24;}
+.dim-s{font-size:14px;font-weight:800;font-family:ui-monospace,Consolas,monospace;padding:1px 8px;border-radius:5px;flex:0 0 auto;}
+.dim-s.up{background:rgba(240,69,58,.15);color:var(--up);}
+.dim-s.yel{background:rgba(251,191,36,.14);color:#fbbf24;}
+.dim-s.dn{background:rgba(16,185,129,.13);color:var(--dn);}
+.chk{display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.6;padding:2px 0;}
+.ck{display:inline-flex;width:15px;height:15px;border-radius:4px;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:0 0 auto;margin-top:2px;}
+.ck.ok{background:rgba(240,69,58,.18);color:var(--up);}
+.ck.warn{background:rgba(245,158,11,.18);color:#f59e0b;}
+.ck.no{background:rgba(16,185,129,.16);color:var(--dn);}
+.ck-t{color:#cbd5e1;flex:0 0 auto;max-width:88px;}
+.ck-v{color:var(--txt);font-family:ui-monospace,Consolas,monospace;font-size:11.5px;min-width:110px;}
+.ck-s{color:var(--muted);font-size:10.8px;margin-left:auto;text-align:right;white-space:normal;max-width:180px;}
+.dsec{margin-top:9px;border-top:1px dashed var(--bd);padding-top:7px;}
+.sc{display:inline-block;min-width:22px;height:20px;line-height:20px;text-align:center;padding:0 5px;border-radius:5px;font-family:ui-monospace,Consolas,monospace;font-weight:800;font-size:12.5px;}
+.sc0{background:rgba(16,185,129,.16);color:var(--dn);}
+.sc1{background:rgba(245,158,11,.15);color:#f59e0b;}
+.sc2{background:rgba(251,191,36,.16);color:#fbbf24;}
+.sc3{background:rgba(240,69,58,.18);color:var(--up);}
 </style>
 </head>
 <body>
@@ -151,8 +173,13 @@ section{scroll-margin-top:70px;}
     </tbody></table></div>
   </div>
   <div>
-    <div class="kpi" style="margin-bottom:8px"><div class="t">主线判定三要素（必须同时满足）</div></div>
-    <div class="concl c-ora">① <b class="yel">资金</b>：板块主力净流入持续为正且居前列<br>② <b class="yel">强度</b>：涨停家数与连板高度断层领先<br>③ <b class="yel">催化</b>：政策/产业事件持续发酵<br><span class="note">三者缺一 → 只算轮动，不算主线，不重仓。</span></div>
+    <div class="kpi" style="margin-bottom:8px"><div class="t">主线判定三维标准（必须同时达标）</div></div>
+    <div class="concl c-ora" style="line-height:1.75">
+      <b class="up">① 资金</b>（权重最高·一票核心）：成交额居前5~8位 · 量比≥1.25 放量 · 主力净流入为正 · 连续2日放量且净流入 · 早盘至午盘持续承接<br>
+      <b class="yel">② 强度</b>：首板≥8家 · 连板≥2家（非孤龙）· 红盘占比&gt;65% · 炸板率&lt;35% · 梯队完整 · 相对大盘抗跌<br>
+      <b class="blu">③ 催化</b>：政策落地/订单/业绩/技术突破等硬催化，且可持续发酵<br>
+      <span class="note">权重裁决：资金 &gt; 持续性 &gt; 强度 &gt; 催化。三维全达标 + 结构加验通过 → S/A 级主线；任一否决或结构不足 → 只算轮动/强题材，不重仓。</span>
+    </div>
   </div>
 </div>
 <div class="grid2" style="margin-top:10px">
@@ -206,7 +233,7 @@ section{scroll-margin-top:70px;}
 <div class="grid2" id="m7_2"><div class="loading">数据加载中…</div></div>
 <h2 style="font-size:14px;margin-top:18px">7.3 板块三榜</h2>
 <div class="grid3" id="m7_3"><div class="loading">数据加载中…</div></div>
-<h2 style="font-size:14px;margin-top:18px">7.4 主线判定（四维加权：涨停35% + 主力净流入25% + 板块涨幅25% + 连板高度15%）</h2>
+<h2 style="font-size:14px;margin-top:18px">7.4 主线判定（三维标准：资金 + 强度 + 催化 = S/A 级主线总纲）</h2>
 <div id="m7_4"><div class="loading">数据加载中…</div></div>
 <h2 style="font-size:14px;margin-top:18px">7.5 板块五级分级 S/A/B/C/D</h2>
 <div id="m7_5"><div class="loading">数据加载中…</div></div>
@@ -218,7 +245,7 @@ section{scroll-margin-top:70px;}
 <div id="m7_8"><div class="loading">数据加载中…</div></div>
 <h2 style="font-size:14px;margin-top:18px">7.9 交叉分析：10日涨幅前100 × 成交额&gt;10亿</h2>
 <div id="m7_9"><div class="loading">数据加载中…</div></div>
-<h2 style="font-size:14px;margin-top:18px">7.10 主线标的筛选（龙头 / 中军 / 补涨 三档 · 范围=7.4主线Top1板块成分股）</h2>
+<h2 style="font-size:14px;margin-top:18px">7.10 主线标的筛选（龙头 / 中军 / 补涨 三档 · 范围=7.4主线判定 Top1 板块成分股）</h2>
 <div id="m7_10"><div class="loading">数据加载中…</div></div>
 <h2 style="font-size:14px;margin-top:18px">7.11 热榜 / 人气榜 TOP20</h2>
 <div id="m7_11"><div class="loading">数据加载中…</div></div>
@@ -299,13 +326,14 @@ function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e)
 var D = {
   date: dstr(new Date()), pdate: prevTradeDate(),
   zt: [], zb: [], dt: [], prev: [],
-  secUp: [], secDn: [],
+  secUp: [], secDn: [], secAmt: [], secAll: [],
   top100: [], bot100: [], amtTop: [],
   idx: {}, idxList: [],
   mkt: null, amtToday: null, amtYest: null, amtEst: null,
   news: [], rank: [], rankSrc: '',
   prevQ: {}, k10: [], indMap: {},
-  emoHist: [], ztGroup: {}, analysis: null
+  emoHist: [], ztGroup: {}, analysis: null,
+  ml: null    /* 主线判定结果（三维标准 + 结构加验 + 环境联动） */
 };
 var REFRESH = 180, remain = REFRESH, refreshing = false;
 var IDX_DEF = [
@@ -343,6 +371,9 @@ function fetchClist(po, pz, fid, fs, fields){
 }
 var FS_STOCK = 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048';
 var FS_SEC = 'm:90+t:2+f:!50';
+/* 板块列表请求字段（主线判定必需）：f2最新 f3涨幅 f6成交额 f8换手 f10量比 f12代码 f14名称
+   f18昨收 f20总市值 f21流通市值 f62主力净流入 f104上涨家数 f105下跌家数 f184主力净占比 f128领涨股 */
+var SEC_F = 'f2,f3,f6,f8,f10,f12,f14,f18,f20,f21,f62,f104,f105,f184,f128';
 
 function txCode(c){ var f = String(c)[0]; if(f === '6') return 'sh' + c; if(f === '0' || f === '3') return 'sz' + c; return null; }
 function emSecid(c){ var f = String(c)[0]; if(f === '6') return '1.' + c; if(f === '0' || f === '3') return '0.' + c; return null; }
@@ -536,8 +567,11 @@ function refreshAll(){
   steps.push(fetchPool('getTopicZBPool', D.date).then(function(a){ D.zb = cleanPool(a); }).catch(function(){ D.zb = []; }));
   steps.push(fetchPool('getTopicDTPool', D.date, 'lbt:asc').then(function(a){ D.dt = cleanPool(a); }).catch(function(){ D.dt = []; }));
   steps.push(fetchPool('getTopicZTPool', D.pdate).then(function(a){ D.prev = cleanPool(a); }).catch(function(){ D.prev = []; }));
-  steps.push(fetchClist(1, 80, 'f3', FS_SEC, 'f2,f3,f8,f12,f14,f62,f104,f105,f128,f141').then(function(a){ D.secUp = a; }).catch(function(){ D.secUp = []; }));
-  steps.push(fetchClist(0, 80, 'f3', FS_SEC, 'f2,f3,f8,f12,f14,f62,f104,f105,f128,f141').then(function(a){ D.secDn = a; }).catch(function(){ D.secDn = []; }));
+  /* 板块字段：f6成交额 f10量比 f18昨收 f20总市值 f21流通市值 f104上涨家数 f105下跌家数 f184主力净占比
+     —— 主线三维判定（资金/强度）全部依赖这些字段，不能删 */
+  steps.push(fetchClist(1, 100, 'f3', FS_SEC, SEC_F).then(function(a){ D.secUp = a; }).catch(function(){ D.secUp = []; }));
+  steps.push(fetchClist(0, 100, 'f3', FS_SEC, SEC_F).then(function(a){ D.secDn = a; }).catch(function(){ D.secDn = []; }));
+  steps.push(fetchClist(1, 100, 'f6', FS_SEC, SEC_F).then(function(a){ D.secAmt = a; }).catch(function(){ D.secAmt = []; }));
   steps.push(fetchClist(1, 100, 'f3', FS_STOCK, 'f2,f3,f6,f12,f14,f100').then(function(a){ D.top100 = a; }).catch(function(){ D.top100 = []; }));
   steps.push(fetchClist(0, 100, 'f3', FS_STOCK, 'f2,f3,f6,f12,f14,f100').then(function(a){ D.bot100 = a; }).catch(function(){ D.bot100 = []; }));
   steps.push(fetchClist(1, 100, 'f6', FS_STOCK, 'f2,f3,f6,f12,f14,f100').then(function(a){ D.amtTop = a; }).catch(function(){ D.amtTop = []; }));
@@ -547,6 +581,7 @@ function refreshAll(){
   steps.push(fetchRank().then(function(r){ D.rank = r.list; D.rankSrc = r.src; }).catch(function(){ D.rank = []; D.rankSrc = ''; }));
 
   Promise.all(steps).then(function(){
+    buildSecAll();
     D.idxList = IDX_DEF.map(function(x){
       var a = D.idx[x[0]];
       if(!a) return { code: x[0], name: x[1], pct: null, price: null, amt: null };
@@ -579,6 +614,9 @@ function refreshAll(){
     D.k10 = k10;
     buildGroups();
     D.analysis = analyzePrev();
+    saveSecSnapshot();                    /* 收盘后落盘当日板块快照，供次日"连续2日"验证 */
+    return buildMainline();               /* 三维主线判定（含候选板块成分股异步加载） */
+  }).then(function(){
     renderAll();
     refreshing = false;
     $('lastUpd').textContent = new Date().toTimeString().slice(0, 8);
@@ -600,16 +638,15 @@ function buildGroups(){
   });
 }
 function secByName(n, exactOnly){
-  for(var i = 0; i < D.secUp.length; i++){ if(D.secUp[i].f14 === n) return D.secUp[i]; }
-  for(var j = 0; j < D.secDn.length; j++){ if(D.secDn[j].f14 === n) return D.secDn[j]; }
+  var U = secList();
+  for(var i = 0; i < U.length; i++){ if(U[i].f14 === n) return U[i]; }
   if(exactOnly) return null;
   /* 二级模糊匹配：个股f100行业名与板块榜f14名称体系不完全一致（如"家居用品"↔"其他家居用品/定制家居"），
-     精确未命中时找板块名与行业名互为包含的首个（优先涨幅榜）。仅用于展示参考，
+     精确未命中时找板块名与行业名互为包含的首个。仅用于展示参考，
      需要板块代码(BKxxxx)的场景必须传 exactOnly 防止误匹配拉错成分股 */
-  var all = D.secUp.concat(D.secDn);
-  for(var k = 0; k < all.length; k++){
-    var b = String(all[k].f14 || '');
-    if(b && (b.indexOf(n) >= 0 || n.indexOf(b) >= 0)) return all[k];
+  for(var k = 0; k < U.length; k++){
+    var b = String(U[k].f14 || '');
+    if(b && (b.indexOf(n) >= 0 || n.indexOf(b) >= 0)) return U[k];
   }
   return null;
 }
@@ -619,6 +656,216 @@ function ztCountBySector(){
   return m;
 }
 function maxLbcOf(arr){ return arr.reduce(function(m, x){ return Math.max(m, x.lbc || 1); }, 1); }
+
+/* ==================================================================
+   主线判定引擎（S/A 级主线总纲）
+   ------------------------------------------------------------------
+   三维条件（必须同时达标，缺一即非主线）：
+     资金 0-3（权重最高）、强度 0-3、催化 0-3    总分 0-9
+   六项结构性加验 + 一票否决清单 + 环境（情绪周期）联动降档
+   冲突裁决：资金 > 持续性 > 强度 > 催化
+   ================================================================== */
+function num(v){ return (v == null || v === '-' || v === '' || isNaN(v)) ? null : Number(v); }
+function secList(){ return (D.secAll && D.secAll.length) ? D.secAll : D.secUp.concat(D.secDn); }
+/* 板块并集：涨幅榜 > 成交额榜 > 跌幅榜（保证上涨/放量板块优先命中派生字段） */
+function buildSecAll(){
+  var m = {}, out = [];
+  [D.secUp, D.secAmt, D.secDn].forEach(function(list){
+    (list || []).forEach(function(s){
+      if(!s || !s.f12 || !s.f14 || m[s.f12]) return;
+      m[s.f12] = 1; out.push(s);
+    });
+  });
+  D.secAll = out;
+}
+function secAnyExact(name){
+  var a = secList();
+  for(var i = 0; i < a.length; i++){ if(a[i].f14 === name) return a[i]; }
+  return null;
+}
+/* 板块成交额在全市场行业板块中的排名（1=最大） */
+function secAmtRank(name){
+  var a = D.secAmt || [];
+  for(var i = 0; i < a.length; i++){ if(a[i].f14 === name) return i + 1; }
+  return null;
+}
+/* 板块成分股缓存（结构加验：中军/容量/低位扩散；7.10 三档筛选复用同一缓存避免重复请求） */
+var MLM = {};
+function loadSecMembers(name, bk){
+  var key = D.date + '|' + name, c = MLM[key];
+  if(c && Date.now() - c.t < 1800000) return Promise.resolve(c.v);
+  if(!bk) return Promise.resolve([]);
+  var F = 'f2,f3,f6,f12,f14,f21';
+  /* 成交额降序 + 涨幅降序各一页取并集，覆盖≤200只成分的中大板块 */
+  return Promise.all([
+    fetchClist(1, 100, 'f6', 'b:' + bk, F).catch(function(){ return []; }),
+    fetchClist(1, 100, 'f3', 'b:' + bk, F).catch(function(){ return []; })
+  ]).then(function(rs){
+    var map = {};
+    rs[0].concat(rs[1]).forEach(function(x){
+      if(!x || !x.f12 || !/^[036]/.test(String(x.f12))) return;      /* 排除北交所/新三板 */
+      if(/ST|退/i.test(String(x.f14 || ''))) return;                 /* 排除ST/退市 */
+      if(num(x.f3) == null || num(x.f6) == null || num(x.f21) == null) return; /* 停牌等异常值 */
+      map[x.f12] = x;
+    });
+    var v = Object.keys(map).map(function(k){ return map[k]; });
+    MLM[key] = { t: Date.now(), v: v };
+    return v;
+  });
+}
+
+/* ---------- 每日板块快照：跨日"连续2日放量+净流入"验证 ---------- */
+function saveSecSnapshot(){
+  var d = new Date();
+  if(d.getHours() < 15) return;                    /* 仅收盘后落盘，避免盘中值污染 */
+  var all = lsGet('wb_secsnap', {});
+  var zc = ztCountBySector(), obj = {};
+  (D.secAmt || []).forEach(function(s){
+    var z = D.ztGroup[s.f14] ? D.ztGroup[s.f14].length : 0;
+    obj[s.f14] = { amt: num(s.f6) || 0, f62: num(s.f62) || 0, f3: num(s.f3), zt: z, ml: D.ztGroup[s.f14] ? maxLbcOf(D.ztGroup[s.f14]) : 0 };
+  });
+  Object.keys(zc).forEach(function(n){ if(!obj[n]) obj[n] = { amt: 0, f62: 0, f3: null, zt: zc[n], ml: 0 }; });
+  all[D.date] = obj;
+  var ks = Object.keys(all).sort();
+  while(ks.length > 12){ delete all[ks.shift()]; }   /* 只留最近12个交易日 */
+  lsSet('wb_secsnap', all);
+}
+function secSnapHist(name){
+  var all = lsGet('wb_secsnap', {});
+  var ds = Object.keys(all).filter(function(d){ return d < D.date; }).sort().reverse().slice(0, 5);
+  var inflow = 0, expand = 0, prevAmt = null;
+  ds.forEach(function(d, i){
+    var s = all[d][name];
+    if(!s) return;
+    if(s.f62 > 0) inflow++;
+    if(prevAmt != null && s.amt > prevAmt * 1.25) expand++;
+    prevAmt = s.amt;
+  });
+  return { days: ds.length, inflowDays: inflow, expandDays: expand, ok: inflow >= 1 };
+}
+/* ---------- T+1 板块效应验证（昨日该板块涨停股今日表现） ---------- */
+function t1Verify(name, prevMap){
+  var arr = prevMap[name] || [];
+  if(!arr.length) return { ok: false, n: 0, avg: null, redRate: null, promoRate: null, mian: 0 };
+  var ps = [], prom = 0, mian = 0;
+  arr.forEach(function(x){
+    var q = D.prevQ[x.c];
+    if(q && q.pct != null && !isNaN(q.pct)){ ps.push(q.pct); if(q.pct <= -5) mian++; }
+    if(D.zt.some(function(y){ return y.c === x.c; })) prom++;
+  });
+  var avg = mean(ps), redRate = ps.length ? ps.filter(function(v){ return v > 0; }).length / ps.length : null;
+  return { ok: (avg != null && avg > 0 && prom / arr.length >= 0.3), n: arr.length, avg: avg,
+    redRate: redRate, promoRate: prom / arr.length, promo: prom, mian: mian };
+}
+function prevZtBySector(){
+  var m = {};
+  D.prev.forEach(function(x){ var k = x.hybk; if(k){ if(!m[k]) m[k] = []; m[k].push(x); } });
+  return m;
+}
+
+/* ---------- 催化维：硬催化 / 软催化 ---------- */
+var HARD_KW = ['政策','规划','通知','意见','办法','方案','批复','核准','中标','订单','合同','签约','业绩','预增','预盈','扭亏','突破','量产','投产','获批','落地','试点','试点','首发','上调','补贴','专项','清单','开工','验收','签署','增资'];
+var SOFT_KW = ['预期','传闻','或将','有望','概念','计划','拟','考虑','酝酿','据称','消息人士','关注','猜测','研究','探索'];
+/* 板块名 → 新闻检索别名（新闻用词与板块命名不一致时的桥接；无别名时退化为名称主干） */
+var SEC_ALIAS = {
+  '半导体': ['半导体','芯片','晶圆','光刻','封测','存储'],
+  '元件': ['元件','被动元件','MLCC','电容','电阻','覆铜板'],
+  '光学光电子': ['光学','光电子','面板','LCD','OLED','LED','MiniLED'],
+  '通信设备': ['通信设备','光模块','CPO','基站','交换机','光纤'],
+  '通信线缆及配套': ['通信线缆','光纤光缆','光缆','线缆'],
+  '通信服务': ['通信服务','运营商','5G'],
+  '消费电子': ['消费电子','果链','折叠屏','手机','AR眼镜','可穿戴'],
+  '软件开发': ['软件','大模型','AI应用','信创','人工智能'],
+  '计算机设备': ['计算机设备','服务器','算力','液冷','数据中心'],
+  '互联网服务': ['互联网','电商','平台经济','数据要素','数字经济'],
+  '电池': ['电池','锂电','固态电池','储能','动力电池'],
+  '电池化学品': ['锂电材料','电解液','正极','负极','隔膜'],
+  '能源金属': ['锂','钴','镍','能源金属','锂价'],
+  '光伏设备': ['光伏','组件','硅料','硅片','电池片','逆变器'],
+  '风电设备': ['风电','海上风电','风机','塔筒'],
+  '电网设备': ['电网','特高压','智能电网','变压器'],
+  '电力行业': ['电力','绿电','电价','用电'],
+  '电力': ['电力','电网','特高压','绿电'],
+  '核电': ['核电','核聚变','可控核聚变','钍基'],
+  '汽车零部件': ['汽车零部件','汽配','一体化压铸','智驾','自动驾驶'],
+  '汽车整车': ['整车','车企','新能源车','汽车'],
+  '医疗器械': ['医疗器械','医械','器械'],
+  '医疗服务': ['医疗服务','医院','CXO','CRO'],
+  '化学制药': ['化学制药','创新药','仿制药','医药'],
+  '生物制品': ['生物制品','疫苗','血制品'],
+  '中药': ['中药','中医药'],
+  '证券': ['券商','证券','资本市场','并购重组','注册制'],
+  '银行': ['银行','信贷','降准','存款'],
+  '保险': ['保险','险企','保费'],
+  '房地产开发': ['地产','楼市','房贷','保障房','城中村'],
+  '有色金属': ['有色','铜','铝','稀土','黄金','锂'],
+  '贵金属': ['黄金','白银','贵金属'],
+  '小金属': ['稀土','钨','钼','锑','小金属'],
+  '煤炭开采': ['煤炭','动力煤','焦煤'],
+  '航天航空': ['军工','航天','航空','导弹','军贸','战机'],
+  '航天装备': ['航天','卫星','火箭','商业航天'],
+  '船舶制造': ['船舶','造船','航运'],
+  '农牧饲渔': ['农业','种业','养殖','猪价','粮食'],
+  '化学制品': ['化工','化学制品','化纤','代糖'],
+  '化肥行业': ['化肥','磷肥','钾肥'],
+  '农药兽药': ['农药','兽药'],
+  '通用设备': ['通用设备','机床','工业母机','减速器','机器人'],
+  '专用设备': ['专用设备','锂电设备','半导体设备','光伏设备'],
+  '工程机械': ['工程机械','挖掘机','起重机'],
+  '钢铁': ['钢铁','钢材','铁矿石'],
+  '水泥建材': ['水泥','建材','玻璃'],
+  '玻璃玻纤': ['玻璃','玻纤','光伏玻璃'],
+  '非金属材料': ['非金属材料','碳纤维','石英'],
+  '环保行业': ['环保','水务','固废','碳中和'],
+  '燃气': ['燃气','天然气','LNG'],
+  '石油行业': ['石油','油价','原油','炼化'],
+  '航空机场': ['航空','机场','民航'],
+  '物流行业': ['物流','快递','航运'],
+  '贸易行业': ['贸易','外贸','跨境电商'],
+  '纺织服装': ['纺织','服装','鞋帽'],
+  '家电行业': ['家电','白电','小家电','以旧换新'],
+  '家用轻工': ['家居','轻工','家具'],
+  '造纸印刷': ['造纸','包装','印刷'],
+  '橡胶制品': ['橡胶','轮胎'],
+  '塑料制品': ['塑料','改性塑料'],
+  '珠宝首饰': ['珠宝','黄金饰品'],
+  '美容护理': ['美容','化妆品','医美'],
+  '教育': ['教育','职业教育'],
+  '商业百货': ['百货','零售','免税','消费'],
+  '旅游酒店': ['旅游','酒店','景区','免税'],
+  '文化传媒': ['传媒','影视','短剧','院线'],
+  '游戏': ['游戏','版号','手游'],
+  '工程建设': ['基建','工程','一带一路','水利'],
+  '建筑装饰': ['建筑装饰','装修','幕墙'],
+  '多元金融': ['多元金融','期货','信托','租赁'],
+  '公用事业': ['公用事业','供水','供热'],
+  '铁路公路': ['铁路','公路','高速'],
+  '房地产服务': ['物业','房产服务']
+};
+function secKeywords(name){
+  if(SEC_ALIAS[name]) return SEC_ALIAS[name];
+  var k = [name];
+  var core = String(name).replace(/(及其他|及配套|制造|设备|服务|行业|开采|加工|制品|及服务)$/, '');
+  if(core && core !== name && core.length >= 2) k.push(core);
+  return k;
+}
+function catalystOf(name){
+  var kws = secKeywords(name), hits = 0, hard = 0, soft = 0, firstIdx = -1, samples = [];
+  D.news.forEach(function(n, idx){
+    var t = n.text || '', m = false;
+    for(var i = 0; i < kws.length; i++){ if(t.indexOf(kws[i]) >= 0){ m = true; break; } }
+    if(!m) return;
+    hits++;
+    var h = false, s = false;
+    for(var j = 0; j < HARD_KW.length; j++){ if(t.indexOf(HARD_KW[j]) >= 0){ h = true; break; } }
+    for(var q = 0; q < SOFT_KW.length; q++){ if(t.indexOf(SOFT_KW[q]) >= 0){ s = true; break; } }
+    if(h) hard++; else if(s) soft++;
+    if(firstIdx < 0 || idx < firstIdx) firstIdx = idx;
+    if(samples.length < 2) samples.push({ t: String(n.time || ''), s: t.slice(0, 52) });
+  });
+  return { hits: hits, hard: hard, soft: soft, firstIdx: firstIdx, samples: samples,
+    score: hard >= 2 ? 3 : (hard === 1 ? 2 : (hits > 0 ? 1 : 0)) };
+}
 
 /* 昨日涨停池深度分析 */
 function analyzePrev(){
@@ -1082,18 +1329,319 @@ function calcMainline(){
   info.sort(function(a, b){ return b.score - a.score; });
   return info;
 }
-function renderM74(){
+
+/* ==================================================================
+   主线判定引擎（S/A 级主线总纲）
+   ------------------------------------------------------------------
+   ① 三维条件（必须同时达标，缺一即非主线）：资金0-3 / 强度0-3 / 催化0-3 → 总分0-9
+   ② 六项结构性加验：持续性 / 梯队三层 / 赚钱效应 / 板块容量 / 吸金虹吸 / 抗跌独立
+   ③ 一票否决清单 V1-V5；④ 环境（情绪周期）联动降档
+   冲突裁决：资金 > 持续性 > 强度 > 催化
+   ================================================================== */
+function fmtYi(v){
+  if(v == null || isNaN(v)) return '—';
+  var a = Math.abs(v);
+  if(a >= 1e8) return (v / 1e8).toFixed(2) + '亿';
+  if(a >= 1e4) return (v / 1e4).toFixed(2) + '万';
+  return v.toFixed(0);
+}
+/* 当前时段净流入增量（快照差值法，与 7.8 共用同一份 localStorage 数据） */
+function secSessionFlow(name){
+  var sk = lsGet('wb_snap_' + D.date, { buckets: {} });
+  var bs = Object.keys(sk.buckets || {}).sort();
+  if(!bs.length) return null;
+  var hm = hmNow();
+  var done = bs.filter(function(b){ return hm >= String(b).slice(6, 11); });
+  if(!done.length) return null;
+  var cur = done[done.length - 1];
+  var before = bs.filter(function(b){ return b < cur; });
+  var prev = before.length ? before[before.length - 1] : null;
+  var cb2 = sk.buckets[cur];
+  var a = cb2 ? cb2[name] : null;
+  if(a == null) return null;
+  var pb = (prev && sk.buckets[prev]) ? sk.buckets[prev][name] : null;
+  return pb == null ? (a > 0) : (a - pb > 0);
+}
+
+function buildMainline(){
+  var zc = ztCountBySector();
+  var prevMap = prevZtBySector();
+  var sh = D.idxList[0];
+  var shPct = (sh && sh.pct != null) ? sh.pct : null;
+  var totalInflow = (D.secAmt || []).reduce(function(s, x){ var v = num(x.f62); return s + (v != null && v > 0 ? v : 0); }, 0);
+  var env = emotion();
+
+  /* ---------- 候选板块：涨停板块 ∪ 成交额前8 ∪ 涨幅前8 ∪ 净流入前8 ---------- */
+  var seen = {}, keys = [];
+  function add(n){ if(n && n !== '其他' && n !== '未知' && !seen[n]){ seen[n] = 1; keys.push(n); } }
+  Object.keys(zc).forEach(add);
+  (D.secAmt || []).slice(0, 8).forEach(function(s){ add(s.f14); });
+  (D.secUp || []).slice(0, 8).forEach(function(s){ add(s.f14); });
+  (D.secAmt || []).slice().sort(function(a, b){ return (num(b.f62) || 0) - (num(a.f62) || 0); }).slice(0, 8).forEach(function(s){ add(s.f14); });
+
+  /* ---------- 三维打分 ---------- */
+  var rows = keys.map(function(name){
+    var sec = secAnyExact(name) || secByName(name);
+    var bk = (sec && /^BK/i.test(String(sec.f12 || ''))) ? sec.f12 : '';
+    var f3 = sec ? num(sec.f3) : null, f6 = sec ? num(sec.f6) : null, f10 = sec ? num(sec.f10) : null;
+    var f62 = sec ? num(sec.f62) : null, f184 = sec ? num(sec.f184) : null;
+    var up = sec ? num(sec.f104) : null, dn = sec ? num(sec.f105) : null;
+    var ztArr = D.ztGroup[name] || [];
+    var zt = ztArr.length, maxLbc = zt ? maxLbcOf(ztArr) : 0;
+    var firstCnt = 0, lbCnt = 0, midCnt = 0;
+    ztArr.forEach(function(x){
+      var l = x.lbc || 1;
+      if(l === 1) firstCnt++; else lbCnt++;
+      if(maxLbc >= 3 && l >= 2 && l <= maxLbc - 1) midCnt++;
+    });
+    var zb = D.zb.filter(function(x){ return x.hybk === name; }).length;
+    var dt = D.dt.filter(function(x){ return x.hybk === name; }).length;
+    var zbrate = (zt + zb) > 0 ? zb / (zt + zb) : null;
+    var redRate = (up != null && dn != null && (up + dn) > 0) ? up / (up + dn) : null;
+    var amtRank = secAmtRank(name);
+    var t1 = t1Verify(name, prevMap);
+    var snap = secSnapHist(name);
+    var cata = catalystOf(name);
+    var sess = secSessionFlow(name);
+
+    /* ---- 条件1 资金（权重最高） ---- */
+    var F = {};
+    F.amtRank = { ok: amtRank != null && amtRank <= 8, txt: amtRank == null ? '未进入板块成交额榜' : ('第' + amtRank + '位 · ' + fmtYi(f6)), std: '居全市场前5~8位' };
+    F.expand = { ok: f10 != null && f10 >= 1.25, txt: f10 == null ? '—' : ('量比 ' + f10.toFixed(2) + (f10 >= 1.25 ? '（放量）' : (f10 < 1 ? '（缩量）' : '（温和）'))), std: '较前一交易日放量≥25%' };
+    F.inflow = { ok: f62 != null && f62 > 0 && (f184 == null || f184 > 0), txt: f62 == null ? '—' : (fmtYi(f62) + (f184 != null ? '（主力净占比 ' + f184.toFixed(2) + '%）' : '')), std: '主力净流入为正（板块性流入）' };
+    F.persist = { ok: t1.ok || snap.ok, txt: t1.n ? ('T+1：昨涨停' + t1.n + '家今日均' + fpct(t1.avg) + '·晋级' + (t1.promoRate == null ? '—' : (t1.promoRate * 100).toFixed(0) + '%'))
+        : (snap.days ? ('本机快照近' + snap.days + '日中' + snap.inflowDays + '日净流入为正') : '无历史样本（收盘后自动积累）'), std: '连续2日及以上放量+净流入' };
+    F.session = { ok: sess === true, soft: true, txt: sess == null ? '快照未覆盖本时段' : (sess ? '当前时段资金仍在净流入' : '当前时段资金转为净流出'), std: '早盘~午盘持续承接，非尾盘脉冲' };
+    var fundScore;
+    if(f62 == null || f62 <= 0) fundScore = 0;                                    /* 资金否决：净流出 */
+    else if(f3 != null && f3 > 0 && f10 != null && f10 < 1) fundScore = 0;        /* 缩量冲高 = 虚涨 */
+    else if(F.amtRank.ok && F.expand.ok && F.inflow.ok) fundScore = F.persist.ok ? 3 : 2;
+    else fundScore = 1;
+
+    /* ---- 条件2 强度 ---- */
+    var S = {};
+    S.first = { ok: firstCnt >= 8, txt: firstCnt + '家', std: '首板≥8家' };
+    S.ladder = { ok: lbCnt >= 2, txt: lbCnt + '家' + (maxLbc >= 2 ? '（最高' + maxLbc + '板）' : ''), std: '连板≥2家（非孤龙）' };
+    S.red = { ok: redRate != null && redRate > 0.65, txt: redRate == null ? '—' : ((redRate * 100).toFixed(1) + '%（' + (up || 0) + '涨/' + (dn || 0) + '跌）'), std: '板块红盘占比>65%' };
+    S.zbrate = { ok: zbrate != null && zbrate < 0.35, txt: zbrate == null ? '—' : ((zbrate * 100).toFixed(1) + '%（炸板' + zb + '家）'), std: '炸板率<35%' };
+    S.rel = { ok: f3 != null && shPct != null && f3 > shPct, txt: f3 == null ? '—' : (fpct(f3) + ' vs 上证' + fpct(shPct)), std: '大盘跌它抗跌、大盘涨它跑赢' };
+    S.full = { ok: maxLbc >= 3 && midCnt >= 2 && firstCnt >= 4, txt: '高标' + maxLbc + '板 · 中位' + midCnt + '家 · 首板' + firstCnt + '家 · 连板' + lbCnt + '家', std: '梯队完整（高标+中位+批量首板）' };
+    var sCnt = [S.first, S.ladder, S.red, S.zbrate, S.rel, S.full].filter(function(x){ return x.ok; }).length;
+    var strScore = sCnt >= 5 ? 3 : (sCnt >= 3 ? 2 : (sCnt >= 1 ? 1 : 0));
+
+    /* ---- 条件3 催化 ---- */
+    var C = { score: cata.score, hits: cata.hits, hard: cata.hard, soft: cata.soft, samples: cata.samples };
+
+    /* ---- 一票否决 ---- */
+    var vetos = [];
+    if(f3 != null && f3 > 0 && ((f62 != null && f62 <= 0) || (f10 != null && f10 < 1))) vetos.push({ k: 'V1', t: '板块上涨但资金净流出 / 缩量冲高' });
+    if(firstCnt < 8 && lbCnt < 2) vetos.push({ k: 'V2', t: '首板<8家且无连板（孤龙/零星涨停，个股行情）' });
+    if(C.score === 0) vetos.push({ k: 'V3', t: '无任何对应催化（纯资金乱炒）' });
+    var persistUnknown = (t1.n === 0 && snap.days === 0);
+    if(!persistUnknown && !(t1.ok || snap.ok)) vetos.push({ k: 'V4', t: '单日脉冲，无连续2日资金验证' });
+    if(f3 != null && f3 < 0 && zt === 0) vetos.push({ k: 'V5', t: '板块下跌且无涨停，资金退潮' });
+
+    var total = fundScore + strScore + C.score;
+    var threeOk = fundScore >= 2 && strScore >= 2 && C.score >= 1 && !vetos.length;
+
+    return { name: name, bk: bk, sec: sec, f3: f3, f6: f6, f10: f10, f62: f62, f184: f184, up: up, dn: dn, redRate: redRate,
+      zt: zt, zb: zb, dt: dt, maxLbc: maxLbc, firstCnt: firstCnt, lbCnt: lbCnt, midCnt: midCnt, zbrate: zbrate, amtRank: amtRank,
+      t1: t1, snap: snap, cata: C, sess: sess,
+      F: F, S: S, fundScore: fundScore, strScore: strScore, cataScore: C.score, total: total,
+      threeOk: threeOk, vetos: vetos, persistUnknown: persistUnknown, members: 0, bigMid: 0, diffCnt: 0, maxCap: 0,
+      struct: { items: [], score: 0 }, grade: '—', verdict: '', isMainline: false };
+  });
+
+  rows.sort(function(a, b){ return b.total - a.total || b.zt - a.zt || (b.f62 == null ? -1e12 : b.f62) - (a.f62 == null ? -1e12 : a.f62); });
+  rows = rows.slice(0, 12);
+
+  /* ---------- 结构加验：只对前6名拉成分股（失败不影响判定） ---------- */
+  var need = rows.slice(0, 6).filter(function(r){ return r.bk; });
+  return Promise.all(need.map(function(r){ return loadSecMembers(r.name, r.bk); })).then(function(){
+    var lead = rows[0];
+    var leadShare = (lead && lead.f62 != null && totalInflow > 0) ? lead.f62 / totalInflow : null;
+    var ztSecCnt = Object.keys(zc).length;
+    var mktZt = D.zt.length || 0;
+    var leadZtShare = (lead && mktZt) ? lead.zt / mktZt : null;
+    /* 混沌无主线：最强板块无明显吸金虹吸 + 涨停高度分散 */
+    var chaos = (leadShare != null && leadShare < 0.10) && (ztSecCnt >= 6 && (leadZtShare == null || leadZtShare < 0.20));
+    var ctx = { env: env.cyc, shPct: shPct, totalInflow: totalInflow, leadShare: leadShare, chaos: chaos };
+    rows.forEach(function(r){ finalizeMainline(r, ctx); });
+    var main = rows.filter(function(r){ return r.isMainline; });
+    D.ml = { date: D.date, rows: rows, main: main, top: rows.length ? rows[0] : null,
+      env: env.cyc, envScore: env.score, shPct: shPct, totalInflow: totalInflow,
+      leadShare: leadShare, chaos: chaos, ztSecCnt: ztSecCnt };
+    return D.ml;
+  }).catch(function(e){ console.error('主线判定异常', e); D.ml = null; });
+}
+
+/* 结构加验 + 等级裁定（环境联动） */
+function finalizeMainline(r, ctx){
+  var key = D.date + '|' + r.name;
+  var mem = MLM[key] ? MLM[key].v : [];
+  r.members = mem.length;
+  var bigMid = 0, diff = 0, maxCap = 0;
+  mem.forEach(function(x){
+    var f6 = num(x.f6), f21 = num(x.f21), f3 = num(x.f3);
+    if(f6 >= 1e9 && f21 >= 5e9) bigMid++;
+    if(f3 != null && f3 >= 0 && f3 <= 5) diff++;
+    if(f21 != null && f21 > maxCap) maxCap = f21;
+  });
+  r.bigMid = bigMid; r.diffCnt = diff; r.maxCap = maxCap;
+  var share = (r.f62 != null && ctx.totalInflow > 0) ? r.f62 / ctx.totalInflow : null;
+  var H = {};
+  H.h1 = { ok: !!(r.t1.ok || r.snap.ok), soft: r.persistUnknown, t: '持续性验证（T+1/T+2 资金不撤、量能不塌）',
+    txt: r.t1.n ? ('昨涨停' + r.t1.n + '家今日均' + fpct(r.t1.avg) + '、晋级率' + (r.t1.promoRate == null ? '—' : (r.t1.promoRate * 100).toFixed(0) + '%'))
+      : (r.snap.days ? ('本机快照近' + r.snap.days + '日中' + r.snap.inflowDays + '日净流入为正') : '无历史样本，需明日复核') };
+  H.h2 = { ok: r.maxLbc >= 2 && (r.bigMid > 0 || (r.f6 != null && r.f6 >= 1e10)) && diff >= 5,
+    t: '龙头梯队三层结构（高标打高度 + 中军承接 + 低位补涨扩散）',
+    txt: '高标' + (r.maxLbc >= 2 ? r.maxLbc + '板' : '无') + ' · 中军' + (r.bigMid || (r.f6 != null && r.f6 >= 1e10 ? '板块容量大' : '无')) + '家 · 低位扩散' + diff + '只' };
+  H.h3 = { ok: (r.t1.n ? r.t1.mian <= 1 : true) && (r.t1.avg == null || r.t1.avg > 0) && r.redRate != null && r.redRate > 0.5,
+    t: '赚钱效应不扩散亏钱效应（后排有溢价、无批量大面）',
+    txt: (r.t1.n ? '昨涨停股大面' + r.t1.mian + '家 · ' : '') + '红盘占比' + (r.redRate == null ? '—' : (r.redRate * 100).toFixed(0) + '%') };
+  H.h4 = { ok: (mem.length >= 20 || (r.f6 != null && r.f6 >= 5e9)) && maxCap >= 1e10,
+    t: '板块容量（大中军 + 小票弹性并存，能容纳大资金）',
+    txt: '成分股' + (mem.length || '—') + '只 · 最大流通' + (maxCap ? (maxCap / 1e8).toFixed(0) + '亿' : '—') + ' · 板块成交额' + fmtYi(r.f6) };
+  H.h5 = { ok: r.f62 != null && r.f62 > 0 && (ctx.leadShare == null || share == null || share >= ctx.leadShare * 0.5),
+    t: '吸金虹吸地位（全市场资金向它集中）',
+    txt: share == null ? '—' : ('占行业板块净流入合计 ' + (share * 100).toFixed(1) + '%') };
+  H.h6 = { ok: r.f3 != null && ctx.shPct != null && (r.f3 > ctx.shPct || (ctx.shPct < 0 && r.f3 > 0)),
+    t: '抗跌独立（大盘调整时独立走强，不跟跌）',
+    txt: r.f3 == null ? '—' : (fpct(r.f3) + ' vs 上证' + fpct(ctx.shPct)) };
+  var ks = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+  r.struct = { items: ks.map(function(k){ var o = H[k]; o.key = k; return o; }),
+    score: ks.filter(function(k){ return H[k].ok; }).length };
+
+  /* ---- 等级裁定：三维 + 结构 + 环境联动 ---- */
+  var env = ctx.env;
+  r.envBlock = (env === '冰点' || env === '退潮');
+  if(ctx.chaos){ r.grade = '—'; r.isMainline = false; r.verdict = '混沌无主线（多板块零散上涨、无资金虹吸）'; }
+  else if(!r.threeOk){
+    r.grade = '—'; r.isMainline = false;
+    if(r.fundScore === 0) r.verdict = '非主线（资金不达标：净流出或缩量冲高）';
+    else if(r.fundScore >= 2 && r.strScore >= 2 && r.cataScore === 0) r.verdict = '强题材（资金+强度达标，无催化支撑）';
+    else if(r.strScore >= 2 && !r.persistUnknown && !(r.t1.ok || r.snap.ok)) r.verdict = '强题材/一日游（缺持续性资金验证）';
+    else r.verdict = '非主线（三维未同时达标）';
+  }
+  else if(r.envBlock){ r.grade = 'B'; r.isMainline = false; r.verdict = 'B级活口（' + env + '期不存在真主线，整体降档）'; }
+  else if(r.total >= 7 && r.struct.score >= 5 && r.cata.hard >= 1 && (env === '主升' || env === '修复')){
+    r.grade = 'S'; r.isMainline = true; r.verdict = 'S级主线（' + env + '期，三维+结构共振，硬催化驱动）';
+  }
+  else if(r.total >= 6 && r.struct.score >= 4){
+    r.grade = 'A'; r.isMainline = true;
+    r.verdict = 'A级主线（' + env + '期，' + (r.cata.hard >= 1 ? '硬催化在' : '仅软催化·题材预期，最高A级以下') + '，可中仓做低位补位）';
+  }
+  else { r.grade = 'B'; r.isMainline = false; r.verdict = 'B级活口（三维达标但结构/周期未共振 ' + r.struct.score + '/6）'; }
+}
+
+/* 7.4 与 7.10 共用的主线 Top1（无有效判定时回退旧四维评分） */
+function mainlineTop(){
+  if(D.ml && D.ml.rows && D.ml.rows.length){
+    var t = D.ml.rows[0];
+    return { name: t.name, grade: t.grade, isMainline: t.isMainline, total: t.total, verdict: t.verdict,
+      zt: t.zt, ml: t.maxLbc, f62: t.f62, f3: t.f3, row: t };
+  }
   var info = calcMainline();
-  if(!info.length){ $('m7_4').innerHTML = '<div class="loading">今日暂无≥2家涨停的板块，判定为：无主线（轮动市）</div>'; return; }
-  var top = info.slice(0, 3);
-  var verdict = top[0].score >= 60 ? '<span class="tag tag-r" style="font-size:14px">有主线</span>' : (top[0].score >= 40 ? '<span class="tag tag-o" style="font-size:14px">潜在主线</span>' : '<span class="tag tag-g" style="font-size:14px">无主线</span>');
-  var rows = top.map(function(x, i){
-    return '<tr><td class="mono">' + (i + 1) + '</td><td><b class="yel">' + esc(x.name) + '</b></td><td class="up">' + x.zt + '家</td><td>' + pnum(x.f62) + '</td><td>' + pcts(x.f3) + '</td><td class="mono">' + x.ml + '板</td><td class="mono">' + x.score.toFixed(1) + '</td></tr>';
+  if(!info.length) return null;
+  return { name: info[0].name, grade: '—', isMainline: false, total: 0, verdict: '', zt: info[0].zt, ml: info[0].ml, f62: info[0].f62, f3: info[0].f3, row: null };
+}
+
+/* ---------- 7.4 渲染 ---------- */
+function chkRow(label, o, std){
+  var cls = o.ok ? 'ok' : (o.soft ? 'warn' : 'no');
+  var mark = o.ok ? '✓' : (o.soft ? '!' : '×');
+  return '<div class="chk"><span class="ck ' + cls + '">' + mark + '</span><span class="ck-t">' + label + '</span>' +
+    '<span class="ck-v">' + o.txt + '</span>' + (std ? '<span class="ck-s">' + std + '</span>' : '') + '</div>';
+}
+function dimCard(title, score, max, inner, note){
+  var cls = score >= 2 ? 'up' : (score >= 1 ? 'yel' : 'dn');
+  return '<div class="dim"><div class="dim-h"><b>' + title + '</b><span class="dim-s ' + cls + '">' + score + ' / ' + max + '</span></div>' +
+    inner + (note ? '<div class="note" style="margin-top:5px">' + note + '</div>' : '') + '</div>';
+}
+function renderM74(){
+  var ml = D.ml, box = $('m7_4');
+  if(!ml || !ml.rows || !ml.rows.length){ box.innerHTML = '<div class="loading">主线判定数据准备中…（等待板块列表与涨停池数据）</div>'; return; }
+  var env = ml.env, main = ml.main, top = ml.rows[0];
+  var envCls = { '冰点': 'tag-b', '修复': 'tag-g', '主升': 'tag-r', '分歧': 'tag-y', '退潮': 'tag-o' }[env] || 'tag-b';
+  var envBlock = (env === '冰点' || env === '退潮');
+  var hero, verdictTag;
+  if(main.length){
+    var m0 = main[0];
+    verdictTag = '<span class="tag ' + (m0.grade === 'S' ? 'tag-r' : 'tag-o') + '" style="font-size:15px;font-weight:800">有主线 · ' + m0.grade + '级</span>';
+    hero = '主线板块 <b class="yel" style="font-size:15px">' + esc(m0.name) + '</b> —— 总分 <b class="mono">' + m0.total + '/9</b>（资金' + m0.fundScore + ' / 强度' + m0.strScore + ' / 催化' + m0.cataScore + '）· 结构加验 <b class="mono">' + m0.struct.score + '/6</b>' +
+      (main.length > 1 ? '<br>同时达标：' + main.slice(1).map(function(x){ return '<b class="yel">' + esc(x.name) + '</b>（' + x.grade + '级）'; }).join('、') : '');
+  }else{
+    verdictTag = '<span class="tag tag-g" style="font-size:15px;font-weight:800">无主线</span>';
+    hero = '最强方向 <b class="yel">' + esc(top.name) + '</b> —— 总分 <b class="mono">' + top.total + '/9</b> · ' + esc(top.verdict) +
+      '<br><span class="note">按总纲：三维未同时达标或触发一票否决时，只算轮动/强题材，不重仓单一方向。</span>';
+  }
+  var envHtml = '<b>环境联动：</b>当前周期 <span class="tag ' + envCls + '">' + env + '</span>（情绪指数 ' + ml.envScore.toFixed(1) + '）→ ' +
+    (envBlock ? '<span class="dn">冰点/退潮期不存在真主线，即使板块数据达标也整体降档为 B 级活口</span>'
+      : '<span class="grn">' + env + '期具备产生 ' + ((env === '主升' || env === '修复') ? 'S / A' : 'A') + ' 级主线的环境</span>');
+
+  var trows = ml.rows.map(function(r, i){
+    var sc = function(v){ return '<span class="sc ' + (v >= 3 ? 'sc3' : (v >= 2 ? 'sc2' : (v >= 1 ? 'sc1' : 'sc0'))) + '">' + v + '</span>'; };
+    var gTag = r.grade === 'S' ? 'tag-r' : (r.grade === 'A' ? 'tag-o' : (r.grade === 'B' ? 'tag-y' : 'tag-b'));
+    return '<tr' + (r.isMainline ? ' style="background:rgba(240,69,58,.09)"' : '') + '><td class="mono">' + (i + 1) + '</td>' +
+      '<td><b class="yel">' + esc(r.name) + '</b>' + (r.isMainline ? ' <span class="tag tag-r" style="font-size:10.5px">主线</span>' : '') + '</td>' +
+      '<td>' + sc(r.fundScore) + '</td><td>' + sc(r.strScore) + '</td><td>' + sc(r.cataScore) + '</td>' +
+      '<td class="mono"><b>' + r.total + '</b><span class="flat">/9</span></td>' +
+      '<td class="mono">' + r.struct.score + '<span class="flat">/6</span></td>' +
+      '<td><span class="tag ' + gTag + '">' + r.grade + '</span></td>' +
+      '<td class="flat" style="white-space:normal;min-width:190px">' + esc(r.verdict) + (r.vetos.length ? ' <span class="dn">[否决' + r.vetos.length + '项]</span>' : '') + '</td></tr>';
   }).join('');
-  $('m7_4').innerHTML =
-  '<div class="concl c-ora">判定结论：' + verdict + ' &nbsp;主线板块TOP3：<b class="yel">' + top.map(function(x){ return esc(x.name); }).join('、') + '</b></div>' +
-  '<div class="twrap"><table><thead><tr><th>#</th><th>板块</th><th>涨停家数</th><th>主力净流入(亿)</th><th>板块涨幅</th><th>最高连板</th><th>综合评分</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
-  '<details><summary>判定逻辑</summary><div class="dbody note">四维加权：涨停家数35% + 主力净流入25% + 板块涨幅25% + 连板高度15%，各维按板块间最大值归一化。≥60分认定主线，40-60分潜在主线，否则无主线。资金+强度+催化三要素需同时满足方可重仓。</div></details>';
+
+  var details = ml.rows.slice(0, 6).map(function(r, i){
+    var fund = dimCard('① 资金条件（权重最高）', r.fundScore, 3,
+      chkRow('板块成交额', r.F.amtRank, r.F.amtRank.std) +
+      chkRow('放量', r.F.expand, r.F.expand.std) +
+      chkRow('主力净流入', r.F.inflow, r.F.inflow.std) +
+      chkRow('资金持续性', r.F.persist, r.F.persist.std) +
+      chkRow('进场时段', r.F.session, r.F.session.std),
+      '资金否决：上涨但净流出 / 缩量冲高 → 直接取消主线资格');
+    var str = dimCard('② 强度条件', r.strScore, 3,
+      chkRow('涨停梯队·首板', r.S.first, r.S.first.std) +
+      chkRow('连板高度', r.S.ladder, r.S.ladder.std) +
+      chkRow('板块红盘占比', r.S.red, r.S.red.std) +
+      chkRow('炸板率', r.S.zbrate, r.S.zbrate.std) +
+      chkRow('梯队完整性', r.S.full, r.S.full.std) +
+      chkRow('相对大盘', r.S.rel, r.S.rel.std),
+      '强度否决：仅1只高标、无批量涨停 → 个股妖股行情');
+    var cata = dimCard('③ 催化条件', r.cataScore, 3,
+      chkRow('事件/新闻命中', { ok: r.cata.hits > 0, txt: r.cata.hits + ' 条' }, '板块名/别名命中快讯条数') +
+      chkRow('硬催化', { ok: r.cata.hard > 0, txt: r.cata.hard + ' 条' }, '政策落地/订单/业绩/技术突破') +
+      chkRow('软催化', { ok: r.cata.soft > 0, soft: true, txt: r.cata.soft + ' 条' }, '仅题材预期 → 最高A级以下'),
+      r.cata.samples.length ? '命中样本：' + r.cata.samples.map(function(s){ return '「' + esc(s.s) + '」'; }).join(' ') : '未命中相关快讯');
+    var struct = r.struct.items.map(function(o){ return chkRow(o.t, o, ''); }).join('');
+    var veto = r.vetos.length
+      ? r.vetos.map(function(v){ return '<div class="chk"><span class="ck no">×</span><span class="ck-t">' + v.k + '</span><span class="ck-v" style="min-width:auto">' + esc(v.t) + '</span></div>'; }).join('')
+      : '<div class="chk"><span class="ck ok">✓</span><span class="ck-t">一票否决清单</span><span class="ck-v" style="min-width:auto">全部未触发</span></div>';
+    return '<details' + (i < 3 ? ' open' : '') + '><summary>' + esc(r.name) + ' · ' + r.total + '分 · ' + (r.grade === '—' ? '非主线' : r.grade + '级') + ' · ' + esc(r.verdict) + '</summary><div class="dbody">' +
+      '<div class="grid3">' + fund + str + cata + '</div>' +
+      '<div class="dsec"><b class="blu">结构性加验（' + r.struct.score + '/6）</b>' + struct + '</div>' +
+      '<div class="dsec"><b class="dn">一票否决清单</b>' + veto + '</div>' +
+      '</div></details>';
+  }).join('');
+
+  box.innerHTML =
+  '<div class="concl ' + (main.length ? 'c-red' : 'c-ora') + '"><div style="margin-bottom:4px">' + verdictTag + '</div>' +
+    '<div style="font-size:13.5px;line-height:1.9">' + hero + '</div>' +
+    '<div class="note" style="margin-top:6px">' + envHtml + '</div></div>' +
+  '<div class="twrap"><table><thead><tr><th>#</th><th>板块</th><th>资金(0-3)</th><th>强度(0-3)</th><th>催化(0-3)</th><th>总分</th><th>结构加验</th><th>等级</th><th>判定结论</th></tr></thead><tbody>' + trows + '</tbody></table></div>' +
+  '<div class="note">权重裁决：资金 &gt; 持续性 &gt; 强度 &gt; 催化。候选=有涨停板块 ∪ 成交额前8 ∪ 涨幅前8 ∪ 净流入前8。点击下方板块展开三维子项明细。</div>' +
+  '<div style="margin-top:10px">' + details + '</div>' +
+  (ml.chaos ? '<div class="concl c-grn"><b>混沌提示：</b>最强板块净流入占行业合计仅 ' + (ml.leadShare == null ? '—' : (ml.leadShare * 100).toFixed(1) + '%') + '，涨停分散在 ' + ml.ztSecCnt + ' 个板块 → 多板块零散上涨、无资金虹吸，按总纲判定为「混沌无主线」。</div>' : '') +
+  '<details><summary>判定标准（S/A 级主线总纲 · 本页执行口径）</summary><div class="dbody note">' +
+  '<b>三维条件（必须同时达标）</b><br>' +
+  '① 资金：板块成交额居全市场前5~8位 · 较前日放量≥25%（量比≥1.25）· 主力净流入为正 · 连续2日放量+净流入 · 早盘至午盘持续承接。<br>' +
+  '② 强度：首板≥8家 · 连板≥2家（非孤龙）· 板块红盘占比&gt;65% · 炸板率&lt;35% · 梯队完整 · 相对大盘抗跌或跑赢。<br>' +
+  '③ 催化：政策落地/行业数据/产业订单/技术突破/业绩预喜等硬催化，且可持续发酵。<br>' +
+  '<b>结构性加验（6项）</b>：持续性验证 / 龙头梯队三层 / 赚钱效应不扩散亏钱效应 / 板块容量 / 吸金虹吸地位 / 抗跌独立。<br>' +
+  '<b>一票否决</b>：V1上涨但净流出或缩量 · V2首板&lt;8家且无连板 · V3无对应催化 · V4单日脉冲无连续2日验证 · V5板块下跌且无涨停。<br>' +
+  '<b>环境联动</b>：冰点/退潮期不存在真主线，最强板块仅算 B 级活口；主升/修复期才可能产生 S 级主线。<br>' +
+  '<b>等级</b>：S=三维+结构全共振（总分≥7、结构≥5、有硬催化，且处于主升/修复期）；A=总分≥6且结构≥4（仅软催化时最高A级，可中仓做低位补位）；B=活口。<br>' +
+  '<span class="flat">口径说明：放量以板块量比(f10)衡量（等同"较近期均量放大比例"）；"连续2日"优先用 T+1 板块效应（昨日涨停股今日晋级率/均价），其次用本机收盘快照积累，首个交易日显示"无历史样本"。本页仅为交易体系梳理，不构成投资建议。</span>' +
+  '</div></details>';
 }
 function renderM75(){
   var gs = gradeSectors();
@@ -1231,47 +1779,37 @@ function renderM79(){
    龙头：板块内涨停股，连板数降序→首次封板时间升序→封单金额降序，取前3
    中军：板块内未涨停(0≤涨幅<9.8%)+成交额≥10亿+流通市值≥50亿，成交额降序取前3
    补涨：板块内涨幅2-7%+流通市值<100亿，符合条件全部列出（不排序） */
-var ML = { key: '', stocks: null, loading: false };
-function loadMlineStocks(name){
-  var sec = secByName(name, true); /* 必须 exactOnly：模糊误匹配会拉错板块成分股 */
-  var bk = sec && /^BK/i.test(String(sec.f12 || '')) ? sec.f12 : '';
-  ML.key = D.date + '|' + name;
-  if(!bk){ ML.stocks = []; return Promise.resolve(); }
-  ML.loading = true;
-  var F = 'f2,f3,f6,f12,f14,f21';
-  /* 成分股按成交额降序+涨幅降序各拉一页(100)，取并集去重，覆盖≤200只成分的中大板块 */
-  return Promise.all([
-    fetchClist(1, 100, 'f6', 'b:' + bk, F).catch(function(){ return []; }),
-    fetchClist(1, 100, 'f3', 'b:' + bk, F).catch(function(){ return []; })
-  ]).then(function(rs){
-    var map = {};
-    rs[0].concat(rs[1]).forEach(function(x){
-      if(!x || !x.f12 || !/^[036]/.test(String(x.f12))) return;   /* 排除北交所/新三板 */
-      if(/ST|退/i.test(String(x.f14 || ''))) return;              /* 排除ST/退市 */
-      if(typeof x.f3 !== 'number' || typeof x.f6 !== 'number' || typeof x.f21 !== 'number') return; /* 停牌等异常值 */
-      map[x.f12] = x;
-    });
-    ML.stocks = Object.keys(map).map(function(k){ return map[k]; });
-  }).catch(function(){ ML.stocks = []; }).then(function(){ ML.loading = false; });
+var ML = { key: '', loading: false };
+/* 复用 MLM 成分股缓存（与 7.4 结构加验同源）；缓存缺位时触发一次加载并回调重渲染 */
+function mlineStocks(name){
+  var key = D.date + '|' + name, c = MLM[key];
+  if(c && Date.now() - c.t < 1800000) return c.v;
+  if(ML.key !== key && !ML.loading){
+    var sec = secAnyExact(name) || secByName(name, true);
+    var bk = sec && /^BK/i.test(String(sec.f12 || '')) ? sec.f12 : '';
+    ML.key = key;
+    if(!bk) return [];
+    ML.loading = true;
+    loadSecMembers(name, bk).catch(function(){ return []; }).then(function(){ ML.loading = false; renderM710(); });
+  }
+  return null;
 }
 function renderM710(){
-  var info = calcMainline();
-  if(!info.length){ $('m7_10').innerHTML = '<div class="loading">今日暂无≥2家涨停的板块，无主线（轮动市），不进行主线标的筛选</div>'; return; }
-  var m = info[0];
+  var top = mainlineTop();
+  if(!top){ $('m7_10').innerHTML = '<div class="loading">今日暂无候选板块（等待板块列表与涨停池数据），不进行主线标的筛选</div>'; return; }
+  var name = top.name, r = top.row, main = !!top.isMainline;
+  var gCls = top.grade === 'S' ? 'tag-r' : (top.grade === 'A' ? 'tag-o' : 'tag-y');
+  var gTxt = top.grade === '—' ? '非主线' : top.grade + '级';
   /* 龙头：涨停池数据同步可用 */
-  var zts = (D.ztGroup[m.name] || []).slice();
+  var zts = (D.ztGroup[name] || []).slice();
   var maxLbc = zts.reduce(function(r, x){ return Math.max(r, x.lbc || 1); }, 1);
   var minFbt = zts.reduce(function(r, x){ return Math.min(r, x.fbt || 999999); }, 999999);
   var maxFund = zts.reduce(function(r, x){ return Math.max(r, x.fund || 0); }, 0);
   var lts = zts.sort(function(a, b){
     return (b.lbc || 1) - (a.lbc || 1) || (a.fbt || 999999) - (b.fbt || 999999) || (b.fund || 0) - (a.fund || 0);
   }).slice(0, 3);
-  /* 成分股（中军/补涨需要成交额+流通市值字段）异步加载，完成后回填重渲染 */
-  var want = D.date + '|' + m.name;
-  if(ML.key !== want && !ML.loading){
-    loadMlineStocks(m.name).then(function(){ renderM710(); });
-  }
-  var stocks = (ML.key === want && ML.stocks) ? ML.stocks : null;
+  /* 成分股复用 MLM 缓存（7.4 结构加验同源），缺位时异步加载后回填重渲染 */
+  var stocks = mlineStocks(name);
   var mids = stocks ? stocks.filter(function(x){
     return x.f3 >= 0 && x.f3 < 9.8 && x.f6 >= 1e9 && x.f21 >= 5e9;
   }).sort(function(a, b){ return b.f6 - a.f6; }).slice(0, 3) : [];
@@ -1301,7 +1839,10 @@ function renderM710(){
     ? '<span class="dn"><b>当前' + cyc + '期：降仓/不追高</b>，仅观察龙头承接，三档标的仅供跟踪不宜追买</span>'
     : '当前<span class="yel">' + cyc + '</span>期：可按三档策略参与，买入前仍需结合盘口承接（分时均线、量价配合）判断';
   $('m7_10').innerHTML =
-  '<div class="concl c-ora">筛选范围：今日主线Top1板块 <b class="yel">' + esc(m.name) + '</b>（评分' + m.score.toFixed(1) + ' · 涨停' + m.zt + '家 · 最高' + m.ml + '板 · 主力净流入' + pnum(m.f62) + '亿' + (stocks ? ' · 成分股' + stocks.length + '只' : '') + '）</div>' +
+  '<div class="concl ' + (main ? 'c-red' : 'c-ora') + '">筛选范围：7.4 主线判定 Top1 板块 <b class="yel">' + esc(name) + '</b> —— <span class="tag ' + gCls + '" style="font-weight:800">' + gTxt + '</span> ' +
+    (r ? ('总分 <b class="mono">' + r.total + '/9</b>（资金' + r.fundScore + '/强度' + r.strScore + '/催化' + r.cataScore + '）· 结构加验 <b class="mono">' + r.struct.score + '/6</b> · ') : '') +
+    '涨停 <b class="up">' + top.zt + '</b> 家 · 最高 <b class="mono">' + top.ml + '板</b> · 主力净流入 <b class="mono">' + pnum(top.f62) + '亿</b>' + (stocks ? ' · 成分股 <b class="mono">' + stocks.length + '</b> 只' : '') + '</div>' +
+  (main ? '' : '<div class="concl c-grn"><b>非主线提示：</b>该板块当前判定为「' + esc(top.verdict || '非主线') + '」——按总纲不属于 S/A 级主线，下列三档标的仅供跟踪观察，不宜重仓单一方向。</div>') +
   '<div class="grid3" style="margin-top:8px">' +
   tier('龙头（打板核心）', '涨停股：连板数↓ → 封板时间↑ → 封单金额↓', 6,
     '<th>#</th><th>名称</th><th>代码</th><th>连板</th><th>封板时间</th><th>封单(亿)</th>', lh, true) +
@@ -1311,7 +1852,7 @@ function renderM710(){
     '<th>#</th><th>名称</th><th>代码</th><th>涨幅</th><th>成交额(亿)</th><th>流通市值(亿)</th>', wh, !!stocks, true) +
   '</div>' +
   '<div class="concl c-blu" style="margin-top:8px"><b>使用原则：</b>龙头买不到→买中军；中军涨高→找补涨首板；跟风杂毛不做。' + cycTip + '。</div>' +
-  '<div class="note">龙头=连板最高(空间龙头)/封板最早(资金最先认可)/封单最大(多头最强)；中军=大成交额+大流通市值的机构趋势票，波动小容量大；补涨=低位小市值刚启动，行情纵深扩散时的弹性标的。成分股数据来自东财行业板块成分接口，非ST/非北交所，每轮刷新自动更新。</div>';
+  '<div class="note">范围严格取自 7.4 三维主线判定的 Top1 板块（资金&gt;持续性&gt;强度&gt;催化，含结构加验与环境联动）。龙头=连板最高(空间龙头)/封板最早(资金最先认可)/封单最大(多头最强)；中军=大成交额+大流通市值的机构趋势票，波动小容量大；补涨=低位小市值刚启动，行情纵深扩散时的弹性标的。成分股来自东财行业板块成分接口，非ST/非北交所，与 7.4 结构加验共用同一缓存，每轮刷新自动更新。</div>';
 }
 function renderM711(){
   if(!D.rank.length){ $('m7_11').innerHTML = '<div class="loading">热榜数据加载中…（接口可能受限，等待下轮刷新）</div>'; return; }
@@ -1474,6 +2015,8 @@ function renderM11(){
   var v = (a && !a.empty) ? prevVerdict(a) : { name: e.cyc, cls: 'yel', pos: e.pos };
   var gs = gradeSectors();
   var mains = gs.filter(function(g){ return ['S', 'A'].indexOf(g.grade) >= 0; }).slice(0, 3);
+  var ml = D.ml, mlMain = (ml && ml.main) ? ml.main : [];
+  var mlTop = (ml && ml.rows && ml.rows.length) ? ml.rows[0] : null;
   var topAmt = D.amtTop.slice(0, 3).map(function(x){ return esc(x.f14); });
   var sh = D.idxList[0], sz = D.idxList[1];
   var lbCnt = D.zt.filter(function(x){ return (x.lbc || 1) >= 2; }).length;
@@ -1481,24 +2024,36 @@ function renderM11(){
   var s1 = '今日涨停 <b class="up">' + D.zt.length + '</b> 家、炸板 <b class="dn">' + D.zb.length + '</b> 家、跌停 <b class="dn">' + D.dt.length + '</b> 家、连板 <b class="up">' + lbCnt + '</b> 家（最高' + maxLbc + '板）。' +
     ((sh && sh.pct != null) ? '上证' + pcts(sh.pct) : '') + ((sz && sz.pct != null) ? ' 深成指' + pcts(sz.pct) : '') +
     '，全市场成交额 <b class="mono">' + famt(D.amtToday) + '</b>' + (D.amtYest ? '（昨日全天 ' + famt(D.amtYest) + '）' : '') + '。';
-  var s2 = mains.length
-    ? '主线板块：<b class="yel">' + mains.map(function(g){ return esc(g.name) + '(' + g.grade + '级,' + g.zt + '家涨停,最高' + g.maxLbc + '板)'; }).join('、') + '</b>。' + (D.k10.length ? '10日维度强势行业：' + indCount(D.k10, 100).slice(0, 3).map(function(x){ return esc(x.name); }).join('、') + '。' : '')
-    : '暂无S/A级主线板块，市场以轮动脉冲为主，不宜重仓单一方向。';
+  var s2 = (mlMain.length || mlTop)
+    ? (mlMain.length
+      ? '三维主线判定：<b class="yel">' + mlMain.map(function(g){ return esc(g.name) + '(' + g.grade + '级,总分' + g.total + '/9,结构' + g.struct.score + '/6)'; }).join('、') + '</b>，当前周期<span class="tag tag-y">' + ml.env + '</span>。'
+      : '三维主线判定：<b class="yel">' + esc(mlTop.name) + '</b> 为最强方向（' + esc(mlTop.verdict || '非主线') + '），未见达标主线，市场以轮动脉冲为主，不宜重仓单一方向。')
+      + (D.k10.length ? '10日维度强势行业：' + indCount(D.k10, 100).slice(0, 3).map(function(x){ return esc(x.name); }).join('、') + '。' : '')
+    : (mains.length
+      ? '主线板块：<b class="yel">' + mains.map(function(g){ return esc(g.name) + '(' + g.grade + '级,' + g.zt + '家涨停,最高' + g.maxLbc + '板)'; }).join('、') + '</b>。' + (D.k10.length ? '10日维度强势行业：' + indCount(D.k10, 100).slice(0, 3).map(function(x){ return esc(x.name); }).join('、') + '。' : '')
+      : '暂无S/A级主线板块，市场以轮动脉冲为主，不宜重仓单一方向。');
   var s3 = (a && !a.empty)
     ? '赚钱效应：昨涨停今日平均' + pcts(a.avg) + '、中位数' + pcts(a.med) + '、红盘率' + (a.redRate == null ? '—' : (a.redRate * 100).toFixed(0) + '%') + '、晋级率' + (a.promoRate == null ? '—' : (a.promoRate * 100).toFixed(0) + '%') + '。亏钱效应：大面' + a.mianAll + '家、断板大面' + a.duanMian + '家、池内跌停' + a.dtCnt + '家。'
     : '昨涨停池数据缺失，暂无法评估赚钱/亏钱效应。';
   var s4 = [];
-  if(mains.length) s4.push('关注主线 <b class="yel">' + esc(mains[0].name) + '</b> 的梯队补涨与龙头低吸机会');
+  if(mlMain.length) s4.push('关注主线 <b class="yel">' + esc(mlMain[0].name) + '</b>（' + mlMain[0].grade + '级）的梯队补涨与龙头低吸机会');
+  else if(mains.length) s4.push('关注主线 <b class="yel">' + esc(mains[0].name) + '</b> 的梯队补涨与龙头低吸机会');
+  else if(mlTop) s4.push('当前无达标主线，最强方向 <b class="yel">' + esc(mlTop.name) + '</b> 仅作跟踪，不宜追高');
   if(e.cyc === '退潮' || e.cyc === '冰点') s4.push('情绪处于<b class="dn">' + e.cyc + '</b>期，明日以防守为主，等待首板共振回暖再介入');
   else if(e.cyc === '主升') s4.push('情绪<b class="up">主升</b>，可持股待涨，注意高标分歧信号');
   else s4.push('情绪<b class="yel">' + e.cyc + '</b>，明日优先观察竞价溢价与首板方向再决策');
   if(topAmt.length) s4.push('留意高成交核心票（' + topAmt.join('、') + '）的承接力度');
+  var mlTag = ml
+    ? (mlMain.length
+      ? '<span class="tag ' + (mlMain[0].grade === 'S' ? 'tag-r' : 'tag-o') + '">主线 ' + mlMain[0].grade + ' 级 · ' + esc(mlMain[0].name) + '</span>'
+      : '<span class="tag tag-g">无达标主线</span>')
+    : '';
   $('m11body').innerHTML =
   '<div class="concl c-blu"><b>① 今日市场概况：</b>' + s1 + '</div>' +
   '<div class="concl c-ora"><b>② 主线板块分析：</b>' + s2 + '</div>' +
   '<div class="concl ' + ((a && !a.empty && (a.avg || 0) > 0) ? 'c-red' : 'c-grn') + '"><b>③ 赚钱/亏钱效应：</b>' + s3 + '</div>' +
   '<div class="concl c-grn"><b>④ 明日关注方向：</b>' + s4.join('；') + '。</div>' +
-  '<div class="concl c-red"><b>当前周期：</b><span class="tag tag-y">' + e.cyc + '</span> 情绪指数 <b class="mono">' + e.score.toFixed(1) + '</b>，建议仓位上限 <b class="ora">' + e.pos + '</b>（综合判定：' + v.name + '）。</div>';
+  '<div class="concl c-red"><b>当前周期：</b><span class="tag tag-y">' + e.cyc + '</span> 情绪指数 <b class="mono">' + e.score.toFixed(1) + '</b>，建议仓位上限 <b class="ora">' + e.pos + '</b>（综合判定：' + v.name + '）。' + mlTag + '</div>';
 }
 
 /* ================= 启动 ================= */
