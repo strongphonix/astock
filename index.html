@@ -334,6 +334,22 @@ footer b{color:#c3cdd9}
 .yd-val.up-txt{color:#f0453a}
 .yd-val.down-txt{color:#10b981}
 .yd-sub{font-size:10.5px;color:var(--muted);margin-top:2px}
+.yd-analysis{margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.yd-analysis-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.yd-mood-badge{padding:4px 12px;border-radius:999px;font-size:13px;font-weight:800;border:1px solid}
+.yd-analysis-title{font-size:14px;font-weight:700;color:var(--text)}
+.yd-analysis-body{display:flex;flex-direction:column;gap:8px}
+.yd-analysis-row{display:flex;gap:12px;align-items:flex-start}
+.yd-analysis-label{font-size:12px;color:var(--muted);min-width:60px;flex-shrink:0;padding-top:1px}
+.yd-analysis-val{font-size:12.5px;color:#c3cdd9;line-height:1.6;flex:1}
+.yd-analysis-val.yd-action{color:#f5a524;font-weight:600}
+.fund-timeline{margin-bottom:14px}
+.fund-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.fund-table th{background:var(--panel);padding:8px 10px;text-align:center;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap}
+.fund-table td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--line);color:#c3cdd9}
+.fund-table td:first-child{text-align:left;font-weight:600;color:#e2e8f0}
+.fund-table .up-txt{color:#f0453a;font-weight:600}
+.fund-table .down-txt{color:#10b981;font-weight:600}
 @media(max-width:768px){.yd-grid{grid-template-columns:repeat(2,1fr)}}
 .rotation-track{margin-top:14px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .rt-stage{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
@@ -436,6 +452,9 @@ footer b{color:#c3cdd9}
 .hot-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
 .hot-table th{background:var(--panel);padding:7px 6px;text-align:center;color:var(--muted);font-weight:500;border-bottom:1px solid var(--line);white-space:nowrap}
 .hot-table td{padding:7px 6px;text-align:center;border-bottom:1px solid var(--line);color:#c3cdd9}
+.hot-table td.up-txt{color:#f0453a;font-weight:600}
+.hot-table td.down-txt{color:#22c55e;font-weight:600}
+.hot-table td.flat-txt{color:#94a3b8}
 .hot-table td:nth-child(2){text-align:left;font-weight:600;color:#e2e8f0}
 .hot-rank-num{display:inline-block;width:22px;height:22px;line-height:22px;border-radius:4px;font-weight:700;font-size:11px}
 .hot-rank-num.top3{background:#f0453a;color:#fff}
@@ -450,7 +469,8 @@ footer b{color:#c3cdd9}
 .news-tag.industry{background:#f5a52422;color:#f5a524;border:1px solid #f5a52455}
 .news-tag.none{background:#64748b22;color:#64748b;border:1px solid #64748b55}
 .news-content{flex:1}
-.news-title{color:#e2e8f0}
+.news-title{color:#e2e8f0;display:flex;justify-content:space-between;align-items:center}
+.news-time{font-size:11px;color:#64748b;font-weight:400;flex-shrink:0;margin-left:8px}
 .news-sectors{margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .news-sector{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 8px;font-size:11px;color:#94a3b8}
 .news-sector.verified{background:#f0453a22;color:#f0453a;border-color:#f0453a55;font-weight:600}
@@ -566,6 +586,10 @@ footer b{color:#c3cdd9}
       <span class="hint">实时成交额（沪深分钟K线口径）· 10日涨幅与活跃股行业分布 · 板块资金/涨幅/涨停三榜 · 主线判定</span>
     </div>
     <div class="cap-cards" id="capCards"></div>
+    <div class="fund-timeline" id="fundTimelinePanel" style="display:none">
+      <div class="sp-head"><span class="sp-title">盘中资金流向（30分钟间隔）</span><span class="hint">沪深两市汇总 · 主力/超大单/大单 · 实时更新</span></div>
+      <div id="fundTimeline"></div>
+    </div>
     <div class="chart-grid">
       <div class="chart-card"><div class="chart-title">10日涨幅前100 · 行业分布</div><div class="chart" id="chart6" style="height:280px"></div></div>
       <div class="chart-card"><div class="chart-title">成交额&gt;10亿个股 · 行业分布</div><div class="chart" id="chart7" style="height:280px"></div></div>
@@ -737,29 +761,30 @@ function fetchClist(po, fid, pz, pn) {
 function fetchIndexData() {
   var codes = ['sh000001', 'sz399001', 'sz399006', 'sh000688', 'sh000300', 'sh000016', 'sh000905', 'sh000852'];
   var names = ['上证指数', '深证成指', '创业板指', '科创50', '沪深300', '上证50', '中证500', '中证1000'];
-  return fetch('https://qt.gtimg.cn/q=' + codes.join(','), { mode: 'cors' })
-    .then(function (r) { return r.arrayBuffer(); })
-    .then(function (buf) {
-      var text = new TextDecoder('gbk').decode(buf);
-      var lines = text.split(';');
+  return new Promise(function (resolve) {
+    var s = document.createElement('script');
+    s.src = 'https://qt.gtimg.cn/q=' + codes.join(',');
+    s.onload = function () {
       var result = [];
-      lines.forEach(function (line, i) {
-        var m = line.match(/="([^"]+)"/);
-        if (!m) return;
-        var f = m[1].split('~');
-        if (f.length < 38) return;
-        result.push({
-          code: codes[i] || f[2],
-          name: names[i] || f[1],
-          price: parseFloat(f[3]) || 0,
-          prevClose: parseFloat(f[4]) || 0,
-          open: parseFloat(f[5]) || 0,
-          pct: parseFloat(f[32]) || 0,
-          amount: (parseFloat(f[37]) || 0) / 10000  // 万元→亿元
-        });
+      codes.forEach(function (full, i) {
+        var v = window['v_' + full];
+        if (v && v.indexOf('~') > 0) {
+          var p = v.split('~');
+          if (p.length > 37) {
+            result.push({
+              code: full, name: names[i] || p[1],
+              price: parseFloat(p[3]) || 0, prevClose: parseFloat(p[4]) || 0,
+              open: parseFloat(p[5]) || 0, pct: parseFloat(p[32]) || 0,
+              amount: (parseFloat(p[37]) || 0) / 10000
+            });
+          }
+        }
       });
-      return result;
-    });
+      resolve(result);
+    };
+    s.onerror = function () { resolve([]); };
+    document.head.appendChild(s);
+  });
 }
 /* 成交额榜（f6 排序）前500只，用于“成交额>10亿”行业统计；每页独立容错 */
 function fetchBigAmt() {
@@ -848,6 +873,38 @@ function fetchKline(secid, klt, lmt) {
   return jsonp('https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=' + secid +
     '&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57&klt=' + klt +
     '&fqt=1&end=20500101&lmt=' + lmt, 'cb');
+}
+/* 分钟级资金流向（沪深两市汇总）：用于30分钟间隔统计 */
+function fetchFundFlow() {
+  var fields = 'f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65';
+  var pSh = jsonp('https://push2.eastmoney.com/api/qt/stock/fflow/kline/get?lmt=0&klt=1&fields1=f1,f2,f3,f7&fields2=' + fields + '&secid=1.000001', 'cb')
+    .then(function (r) { return (r && r.data && r.data.klines) || []; })
+    .catch(function () { return []; });
+  var pSz = jsonp('https://push2.eastmoney.com/api/qt/stock/fflow/kline/get?lmt=0&klt=1&fields1=f1,f2,f3,f7&fields2=' + fields + '&secid=0.399001', 'cb')
+    .then(function (r) { return (r && r.data && r.data.klines) || []; })
+    .catch(function () { return []; });
+  return Promise.all([pSh, pSz]).then(function (rs) {
+    var map = {};
+    function parse(lines) {
+      lines.forEach(function (line) {
+        var p = line.split(',');
+        if (p.length < 6) return;
+        var t = p[0]; // 2026-09-11 09:31
+        var main = parseFloat(p[1]) || 0; // 主力净流入
+        var superLarge = parseFloat(p[5]) || 0; // 超大单
+        var large = parseFloat(p[4]) || 0; // 大单
+        if (!map[t]) map[t] = { main: 0, superLarge: 0, large: 0 };
+        map[t].main += main;
+        map[t].superLarge += superLarge;
+        map[t].large += large;
+      });
+    }
+    parse(rs[0]);
+    parse(rs[1]);
+    return Object.keys(map).sort().map(function (t) {
+      return { time: t, main: map[t].main, superLarge: map[t].superLarge, large: map[t].large };
+    });
+  });
 }
 function fetchIndexOv() {
   return jsonp('https://push2.eastmoney.com/api/qt/ulist.np/get?secids=1.000001,0.399001' +
@@ -1194,8 +1251,10 @@ function loadAll() {
   var pBig = safe(function () { return fetchBigAmt(); }, '成交额榜');
   var pHot = fetchHotRank().then(function (list) { return fetchHotDetail(list); }).catch(function () { return []; });
   var pIndex = safe(function () { return fetchIndexData(); }, '指数行情');
+  var pNews = fetchNews().catch(function () { return []; });
+  var pFund = fetchFundFlow().catch(function () { return []; });
 
-  Promise.all([pZt, pZb, pDt, pG, pL, pYzt, pOv, pSecUp, pSecDn, pSpd, pVr, pCap1, pCap2, pBig, pHot, pSecSina, pSecTHS, pIndex]).then(function (rs) {
+  Promise.all([pZt, pZb, pDt, pG, pL, pYzt, pOv, pSecUp, pSecDn, pSpd, pVr, pCap1, pCap2, pBig, pHot, pSecSina, pSecTHS, pIndex, pNews, pFund]).then(function (rs) {
     if (rs[0]) S.zt = rs[0];
     if (rs[1]) S.zb = rs[1];
     if (rs[2]) S.dt = rs[2];
@@ -1235,6 +1294,14 @@ function loadAll() {
     // 指数行情
     if (rs[17] && rs[17].length) {
       S.indexData = rs[17];
+    }
+    // 实时快讯
+    if (rs[18] && rs[18].length) {
+      S.newsList = rs[18];
+    }
+    // 分钟级资金流向
+    if (rs[19] && rs[19].length) {
+      S.fundFlow = rs[19];
     }
     // 昨日涨停 → 今日行情
     var codes = S.yzt.map(function (x) { return x.c; });
@@ -2079,8 +2146,10 @@ function renderIndexChart() {
   $('indexPanel').style.display = '';
   var data = S.indexData;
   // 摘要：全市场涨跌家数 + 领涨/领跌指数
-  var upCount = (S.gain || []).length;
-  var downCount = (S.lose || []).length;
+  var upCount = 0, downCount = 0;
+  if (S.ov && S.ov.data && S.ov.data.diff) {
+    S.ov.data.diff.forEach(function (x) { upCount += x.f104 || 0; downCount += x.f105 || 0; });
+  }
   var sorted = data.slice().sort(function (a, b) { return b.pct - a.pct; });
   var leader = sorted[0];
   var laggard = sorted[sorted.length - 1];
@@ -2968,21 +3037,76 @@ function calcLHBTracking() {
   return { mode: mode, rows: rows, buy: buy, sell: sell, total: rows.length, up: up, down: down, zt: zt, dt: dt, degraded: mode !== 'inst' };
 }
 /* 机构净买入/卖出 Top5 */
-/* 消息面/政策催化速览：固化默认消息 + 自动关联板块异动 */
+/* 实时获取新浪7x24财经快讯 */
+function fetchNews() {
+  var url = 'https://zhibo.sina.com.cn/api/zhibo/feed?page=1&page_size=30&zhibo_id=152&tag_id=0&dire=f&dpc=1';
+  return fetch(url, { headers: { 'Referer': 'https://finance.sina.com.cn/' } })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      var list = (j && j.result && j.result.data && j.result.data.feed && j.result.data.feed.list) || [];
+      return list.map(function (it) {
+        return {
+          title: (it.rich_text || '').replace(/<[^>]+>/g, '').trim(),
+          time: it.create_time || '',
+          tag: it.tag || ''
+        };
+      }).filter(function (x) { return x.title.length > 5; });
+    })
+    .catch(function () { return []; });
+}
+/* 关键词→行业映射（用于自动关联快讯影响板块） */
+var NEWS_KEYWORD_MAP = [
+  { kw: ['银行', '金融监管', '信贷', '降准', '降息', 'LPR', '存款准备金'], sec: ['银行'] },
+  { kw: ['保险', '险资', '保费'], sec: ['保险'] },
+  { kw: ['证券', '券商', '投行', '注册制'], sec: ['证券'] },
+  { kw: ['AI', '人工智能', '大模型', '算力', 'ChatGPT', '深度学习'], sec: ['软件开发', 'IT服务', '通信设备'] },
+  { kw: ['数字经济', '数字化', '信息化', '数据要素', '东数西算'], sec: ['IT服务', '软件开发'] },
+  { kw: ['半导体', '芯片', '集成电路', '晶圆', '光刻'], sec: ['半导体'] },
+  { kw: ['新能源', '光伏', '储能', '风电', '太阳能'], sec: ['光伏设备', '电力'] },
+  { kw: ['新能源车', '电动汽车', '锂电池', '动力电池', '充电桩'], sec: ['汽车整车', '电池'] },
+  { kw: ['房地产', '房企', '楼市', '房价', '限购', '现房销售'], sec: ['房地产开发', '家居用品'] },
+  { kw: ['钢铁', '煤炭', '有色', '稀土', '黄金'], sec: ['钢铁', '煤炭', '有色金属'] },
+  { kw: ['医药', '医疗', '创新药', '集采', '医保'], sec: ['化学制药', '医疗器械'] },
+  { kw: ['军工', '国防', '航天', '航空'], sec: ['国防军工'] },
+  { kw: ['消费', '白酒', '食品', '零售', '旅游', '酒店'], sec: ['食品加工制造', '白酒'] },
+  { kw: ['工业母机', '机床', '高端制造', '机器人'], sec: ['通用设备', '自动化设备'] },
+  { kw: ['电力', '电网', '特高压', '核电'], sec: ['电力'] },
+  { kw: ['5G', '6G', '通信', '光模块', '光纤'], sec: ['通信设备'] },
+  { kw: ['苹果', '消费电子', '折叠屏', 'iPhone'], sec: ['消费电子', '黑色家电'] },
+  { kw: ['环保', '碳中和', '碳达峰', '绿色'], sec: ['环保'] },
+  { kw: ['农业', '粮食', '种业', '生猪'], sec: ['种植业', '养殖业'] },
+  { kw: ['石油', '天然气', '原油', 'OPEC'], sec: ['石油加工', '燃气'] },
+  { kw: ['基建', '建筑', '铁路', '公路'], sec: ['建筑装饰'] },
+  { kw: ['教育', '培训', '职教'], sec: ['教育'] },
+  { kw: ['传媒', '游戏', '影视', '元宇宙'], sec: ['游戏', '影视院线'] },
+  { kw: ['化工', '化纤', '塑料', '橡胶'], sec: ['化学制品'] },
+  { kw: ['交通运输', '物流', '港口', '航运', '快递'], sec: ['物流', '港口航运'] },
+];
+/* 从快讯标题提取影响行业 */
+function matchSectorsFromNews(title) {
+  var matched = [];
+  NEWS_KEYWORD_MAP.forEach(function (m) {
+    m.kw.forEach(function (k) {
+      if (title.indexOf(k) >= 0 && matched.indexOf(m.sec[0]) < 0) {
+        matched = matched.concat(m.sec.filter(function (s) { return matched.indexOf(s) < 0; }));
+      }
+    });
+  });
+  return matched;
+}
+/* 消息面/政策催化速览：实时快讯 + 自动关联板块异动 */
 function calcNewsCatalyst() {
-  var news = [
-    { type: '政策', title: '金融监管总局：金融业主要监管指标均处于"健康区间"', sectors: ['银行'] },
-    { type: '政策', title: '金融监管总局丛林：完善保险资金等投早、投小、投长期、投硬科技各项政策', sectors: ['保险'] },
-    { type: '政策', title: '【风口专家会议】AI应用浪潮已行至何处？特邀行业专家全面解读AI大模型为各个领域商业化赋能进展', sectors: ['软件开发'] },
-    { type: '政策', title: '《数字湖北建设"十五五"规划》印发', sectors: ['IT服务'] },
-    { type: '政策', title: '四川省钢铁行业反内卷自律工作会议召开', sectors: ['光伏设备'] },
-    { type: '政策', title: '上海：发展壮大绿色能源、新能源汽车、节能环保等绿色低碳产业', sectors: ['汽车整车'] },
-    { type: '政策', title: '"现房销售"模式落地铺开：多地已经执行，房企拿地趋于谨慎，核心城市房价有望率先企稳回升', sectors: ['家居用品'] },
-    { type: '政策', title: '三部门：开展2026年度享受增值税加计抵减政策的工业母机企业清单制定工作', sectors: ['通用设备'] },
-    { type: '政策', title: '克明食品：第七届董事会第十二次会议决议公告', sectors: ['食品加工制造'] },
-    { type: '产业', title: '高盛：苹果折叠iPhone今年出货最高可达3500万台', sectors: ['黑色家电', '白色家电'] },
-    { type: '无', title: '未检索到影响 电力、多元金融、燃气、厨卫电器、元件 的当日实质性政策或产业消息，上述板块异动以资金和情绪驱动为主', sectors: ['电力', '多元金融', '燃气', '厨卫电器', '元件'], noNews: true }
-  ];
+  var news = (S.newsList || []).slice(0, 15).map(function (n) {
+    var sectors = matchSectorsFromNews(n.title);
+    var type = '产业';
+    if (/政策|监管|部门|印发|通知|规划|会议|发改委|工信部|财政部|央行|国务院/.test(n.title)) type = '政策';
+    if (/公司|公告|业绩|增持|减持|回购/.test(n.title)) type = '公司';
+    return { type: type, title: n.title, time: n.time, sectors: sectors, noNews: sectors.length === 0 };
+  });
+  // 如果实时新闻为空，显示提示
+  if (!news.length) {
+    news = [{ type: '提示', title: '快讯加载中或非交易时段，稍后自动刷新…', sectors: [], noNews: true }];
+  }
   // 构建当前强势板块集合（涨幅前10 + 涨停行业前10）
   var strongSec = {};
   (S.secUp || []).slice(0, 15).forEach(function (s) { strongSec[s.f14] = { pct: num(s.f3), src: '涨幅榜' }; });
@@ -3004,11 +3128,43 @@ function calcNewsCatalyst() {
       };
     });
     var verifiedCount = sectorInfo.filter(function (x) { return x.verified; }).length;
-    return { type: n.type, title: n.title, sectors: sectorInfo, verifiedCount: verifiedCount, noNews: n.noNews };
+    return { type: n.type, title: n.title, time: n.time, sectors: sectorInfo, verifiedCount: verifiedCount, noNews: n.noNews };
   });
   var verifiedTotal = items.reduce(function (sum, x) { return sum + x.verifiedCount; }, 0);
   var totalSectors = items.reduce(function (sum, x) { return sum + x.sectors.length; }, 0);
   return { items: items, verifiedTotal: verifiedTotal, totalSectors: totalSectors };
+}
+/* 昨日涨停深度分析辅助函数 */
+function ydConclusionText(yd) {
+  if (yd.mood && yd.mood.indexOf('主升') >= 0) return '打板生态健康，隔夜溢价充足，连板接力意愿强，市场处于赚钱效应周期';
+  if (yd.mood && yd.mood.indexOf('冰点') >= 0) return '打板生态崩坏，亏钱效应扩散，核按钮频现，市场处于情绪冰点';
+  if (yd.mood && yd.mood.indexOf('退潮') >= 0) return '打板溢价收窄，亏钱效应抬头，高位接力风险加大，市场处于退潮周期';
+  return '情绪中性偏分歧，打板有溢价但分化明显，需精选个股方向';
+}
+function ydLogicText(yd) {
+  var parts = [];
+  if (yd.avgChg != null) parts.push('平均涨幅' + (yd.avgChg >= 0 ? '+' : '') + yd.avgChg.toFixed(2) + '%');
+  if (yd.median != null) parts.push('中位数' + (yd.median >= 0 ? '+' : '') + yd.median.toFixed(2) + '%');
+  if (yd.jinjiRate != null) parts.push('晋级率' + yd.jinjiRate.toFixed(1) + '%');
+  if (yd.bigMianRate != null) parts.push('大面率' + yd.bigMianRate.toFixed(1) + '%');
+  if (yd.redRate != null) parts.push('红盘率' + yd.redRate.toFixed(1) + '%');
+  return parts.join(' · ');
+}
+function ydSignalText(yd) {
+  var signals = [];
+  if (yd.avgOpenPrem != null) {
+    if (yd.avgOpenPrem >= 1.5) signals.push('<span style="color:#f0453a">竞价溢价充足(+' + yd.avgOpenPrem.toFixed(2) + '%)，隔夜资金乐观</span>');
+    else if (yd.avgOpenPrem < 0) signals.push('<span style="color:#10b981">竞价集体低开(' + yd.avgOpenPrem.toFixed(2) + '%)，隔夜资金抢跑</span>');
+    else signals.push('<span style="color:#f5a524">竞价溢价偏弱(+' + yd.avgOpenPrem.toFixed(2) + '%)，资金观望</span>');
+  }
+  if (yd.bigMianRate != null) {
+    if (yd.bigMianRate >= 20) signals.push('<span style="color:#10b981">大面率偏高(' + yd.bigMianRate.toFixed(1) + '%)，接力失败代价大</span>');
+    else if (yd.bigMianRate < 10) signals.push('<span style="color:#f0453a">大面率低(' + yd.bigMianRate.toFixed(1) + '%)，容错率高</span>');
+  }
+  if (yd.lowOpenRate != null && yd.lowOpenRate >= 50) signals.push('<span style="color:#10b981">低开率' + yd.lowOpenRate.toFixed(1) + '%，超半数昨涨停股低开</span>');
+  if (yd.duanbanAvg != null && yd.duanbanAvg < -3) signals.push('<span style="color:#10b981">断板股平均' + yd.duanbanAvg.toFixed(2) + '%，高位分歧偏恶性</span>');
+  if (yd.lanbanAvg != null && yd.lanbanAvg >= 0) signals.push('<span style="color:#f0453a">烂板仍有溢价，市场对差板包容度高</span>');
+  return signals.length ? signals.join('；') : '暂无极端信号';
 }
 /* 昨日涨停池深度分析（独立模块） */
 function renderYztDeep() {
@@ -3056,8 +3212,18 @@ function renderYztDeep() {
       ydCard('断板股平均', dbTxt, '高位分歧态度', yd.duanbanAvg >= 0 ? 'up' : 'down') +
       ydCard('断板大面率', dbMianTxt, 'A杀风险', (yd.duanbanBigMian / (yd.duanbanCount || 1) * 100) >= 30 ? 'down' : '') +
       '</div>' +
-      '<div class="yd-conclusion"><b>综合判定：</b>' + esc(yd.mood || '') + ' — ' + esc(yd.moodAction || '') +
-      (dtCount > 0 ? ' · 昨涨停今日跌停 <b style="color:#10b981">' + dtCount + '</b> 只（核按钮）' : '') + '</div>' +
+      '<div class="yd-analysis">' +
+      '<div class="yd-analysis-head">' +
+      '<span class="yd-mood-badge" style="background:' + (yd.moodColor || '#64748b') + '22;color:' + (yd.moodColor || '#64748b') + ';border-color:' + (yd.moodColor || '#64748b') + '55">' + esc(yd.mood || '待判定') + '</span>' +
+      '<span class="yd-analysis-title">综合情绪判定</span>' +
+      '</div>' +
+      '<div class="yd-analysis-body">' +
+      '<div class="yd-analysis-row"><span class="yd-analysis-label">核心结论</span><span class="yd-analysis-val" style="color:' + (yd.moodColor || '#e2e8f0') + '">' + ydConclusionText(yd) + '</span></div>' +
+      '<div class="yd-analysis-row"><span class="yd-analysis-label">操作建议</span><span class="yd-analysis-val yd-action">' + esc(yd.moodAction || '') + '</span></div>' +
+      '<div class="yd-analysis-row"><span class="yd-analysis-label">分析逻辑</span><span class="yd-analysis-val">' + ydLogicText(yd) + '</span></div>' +
+      '<div class="yd-analysis-row"><span class="yd-analysis-label">关键信号</span><span class="yd-analysis-val">' + ydSignalText(yd) + '</span></div>' +
+      (dtCount > 0 ? '<div class="yd-analysis-row"><span class="yd-analysis-label">风险预警</span><span class="yd-analysis-val" style="color:#10b981">昨涨停今日跌停 <b>' + dtCount + '</b> 只，核按钮出现，亏钱效应扩散</span></div>' : '') +
+      '</div></div>' +
       '<details class="mood-logic"><summary>查看昨涨停个股明细（' + (yd.detail || []).length + '只）</summary>' +
       '<div class="yd-detail"><table class="score-table"><thead><tr><th>名称</th><th>代码</th><th>今日涨跌</th><th>连板</th><th>状态</th><th>行业</th></tr></thead>' +
       '<tbody>' + ydRows + '</tbody></table></div></details>' +
@@ -3074,7 +3240,88 @@ function renderYztDeep() {
     $('yztDeepPanel').style.display = '';
   }
 }
+/* 30分钟间隔资金流向统计 */
+function renderFundTimeline() {
+  var el = $('fundTimeline');
+  if (!el) return;
+  if (!S.fundFlow || !S.fundFlow.length) {
+    el.innerHTML = '<div class="sp-logic" style="color:var(--muted)">资金流向数据加载中…</div>';
+    return;
+  }
+  // 按30分钟分组：09:30-10:00, 10:00-10:30, 10:30-11:00, 11:00-11:30, 13:00-13:30, ...
+  var slots = [
+    { label: '09:30-10:00', start: 930, end: 1000 },
+    { label: '10:00-10:30', start: 1000, end: 1030 },
+    { label: '10:30-11:00', start: 1030, end: 1100 },
+    { label: '11:00-11:30', start: 1100, end: 1130 },
+    { label: '13:00-13:30', start: 1300, end: 1330 },
+    { label: '13:30-14:00', start: 1330, end: 1400 },
+    { label: '14:00-14:30', start: 1400, end: 1430 },
+    { label: '14:30-15:00', start: 1430, end: 1500 }
+  ];
+  var rows = [];
+  var totalMain = 0, totalSuper = 0, totalLarge = 0;
+  slots.forEach(function (slot) {
+    var main = 0, superLarge = 0, large = 0, count = 0;
+    S.fundFlow.forEach(function (f) {
+      // f.time 格式 "2026-09-11 09:31"
+      var hm = parseInt(f.time.slice(11, 13) + f.time.slice(14, 16));
+      if (hm >= slot.start && hm < slot.end) {
+        main += f.main;
+        superLarge += f.superLarge;
+        large += f.large;
+        count++;
+      }
+    });
+    if (count > 0) {
+      totalMain += main;
+      totalSuper += superLarge;
+      totalLarge += large;
+      rows.push({
+        label: slot.label,
+        main: main / 1e8, // 元→亿
+        superLarge: superLarge / 1e8,
+        large: large / 1e8,
+        count: count
+      });
+    }
+  });
+  if (!rows.length) {
+    el.innerHTML = '<div class="sp-logic" style="color:var(--muted)">非交易时段，暂无资金流向数据</div>';
+    return;
+  }
+  var html = '<table class="fund-table"><thead><tr>' +
+    '<th>时间段</th><th>主力净流入(亿)</th><th>超大单(亿)</th><th>大单(亿)</th><th>净额</th>' +
+    '</tr></thead><tbody>';
+  rows.forEach(function (r) {
+    var mainCls = r.main >= 0 ? 'up-txt' : 'down-txt';
+    var superCls = r.superLarge >= 0 ? 'up-txt' : 'down-txt';
+    var largeCls = r.large >= 0 ? 'up-txt' : 'down-txt';
+    var netCls = r.main >= 0 ? 'up-txt' : 'down-txt';
+    var netLabel = r.main >= 0 ? '流入' : '流出';
+    html += '<tr>' +
+      '<td>' + r.label + '</td>' +
+      '<td class="' + mainCls + '">' + (r.main >= 0 ? '+' : '') + r.main.toFixed(2) + '</td>' +
+      '<td class="' + superCls + '">' + (r.superLarge >= 0 ? '+' : '') + r.superLarge.toFixed(2) + '</td>' +
+      '<td class="' + largeCls + '">' + (r.large >= 0 ? '+' : '') + r.large.toFixed(2) + '</td>' +
+      '<td class="' + netCls + '"><b>' + netLabel + '</b> ' + Math.abs(r.main).toFixed(2) + '亿</td>' +
+      '</tr>';
+  });
+  // 合计行
+  var totalCls = totalMain >= 0 ? 'up-txt' : 'down-txt';
+  html += '<tr style="background:var(--panel2);font-weight:700">' +
+    '<td>合计</td>' +
+    '<td class="' + totalCls + '">' + (totalMain >= 0 ? '+' : '') + totalMain.toFixed(2) + '</td>' +
+    '<td class="' + (totalSuper >= 0 ? 'up-txt' : 'down-txt') + '">' + (totalSuper >= 0 ? '+' : '') + totalSuper.toFixed(2) + '</td>' +
+    '<td class="' + (totalLarge >= 0 ? 'up-txt' : 'down-txt') + '">' + (totalLarge >= 0 ? '+' : '') + totalLarge.toFixed(2) + '</td>' +
+    '<td class="' + totalCls + '"><b>' + (totalMain >= 0 ? '净流入' : '净流出') + '</b> ' + Math.abs(totalMain).toFixed(2) + '亿</td>' +
+    '</tr></tbody></table>';
+  el.innerHTML = html;
+}
 function renderCap() {
+  // 30分钟资金流向统计
+  renderFundTimeline();
+  if (S.fundFlow && S.fundFlow.length) $('fundTimelinePanel').style.display = '';
   var ov = S.capOv;
   var cards = [];
   if (ov) {
@@ -3437,12 +3684,12 @@ function renderCap() {
       return '<span class="news-sector ' + cls + '">' + s.name + pct + badge + '</span>';
     }).join('');
     return '<div class="news-item"><span class="news-tag ' + tagCls + '">' + n.type + '</span>' +
-      '<div class="news-content"><div class="news-title">' + esc(n.title) + '</div>' +
+      '<div class="news-content"><div class="news-title">' + esc(n.title) + (n.time ? '<span class="news-time">' + n.time.slice(11, 16) + '</span>' : '') + '</div>' +
       '<div class="news-sectors">影响：' + sectorsHtml + '</div></div></div>';
   }).join('');
   $('newsCatalyst').innerHTML =
     '<div class="sp-head"><span class="sp-title">消息面 / 政策催化速览</span>' +
-    '<span class="hint">自动关联板块异动 · ' + nc.verifiedTotal + '/' + nc.totalSectors + ' 个影响板块已在今日强势榜中验证</span></div>' +
+    '<span class="hint">实时快讯 · 自动关联板块异动 · ' + nc.verifiedTotal + '/' + nc.totalSectors + ' 个影响板块已在今日强势榜中验证</span></div>' +
     '<div class="news-list">' + newsHtml + '</div>' +
     '<details class="mood-logic"><summary>查看消息面分析逻辑</summary><div class="sp-logic">' +
     '<b>关联方法</b>：将每条消息的「影响板块」与今日涨幅前15板块、涨停行业前10做匹配。<br>' +
