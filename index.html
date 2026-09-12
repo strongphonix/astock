@@ -266,6 +266,8 @@ section{scroll-margin-top:70px;}
 <div id="m7_7"><div class="loading">数据加载中…</div></div>
 <h2 style="font-size:14px;margin-top:18px">7.8 涨停前5板块资金流向 · 30分钟统计（快照差值法）</h2>
 <div id="m7_8"><div class="loading">数据加载中…</div></div>
+<h2 style="font-size:14px;margin-top:18px;border-color:#f0453a;color:#f0453a">7.15 盘中三大时间窗口（10:00 日内定性 → 13:00 午后验证 → 14:00 尾盘预演 · 真假回流辨识 + 风险提示）</h2>
+<div id="m7_15"><div class="loading">数据加载中…</div></div>
 <h2 style="font-size:14px;margin-top:18px">7.9 交叉分析：10日涨幅前100 × 成交额&gt;10亿</h2>
 <div id="m7_9"><div class="loading">数据加载中…</div></div>
 <h2 style="font-size:14px;margin-top:18px;border-color:#f0453a;color:#f0453a">7.10 情绪周期 × 买入策略（五阶段完整对照 · 盘中可买清单）</h2>
@@ -278,8 +280,6 @@ section{scroll-margin-top:70px;}
 <div id="m7_13"><div class="loading">数据加载中…</div></div>
 <h2 style="font-size:14px;margin-top:18px">7.14 消息面 / 政策催化速览（新浪7×24，自动关联涨停股）</h2>
 <div id="m7_14"><div class="loading">数据加载中…</div></div>
-<h2 style="font-size:14px;margin-top:18px;border-color:#f0453a;color:#f0453a">7.15 盘中三大时间窗口（10:00 日内定性 → 13:00 午后验证 → 14:00 尾盘预演 · 真假回流辨识 + 风险提示）</h2>
-<div id="m7_15"><div class="loading">数据加载中…</div></div>
 </section>
 
 <!-- 模块8 五池明细 -->
@@ -2473,21 +2473,38 @@ function renderM715(){
   var cnt = { real: 0, doubt: 0, sneak: 0 };
   tails.forEach(function(r){ cnt[r.j.verdict]++; });
   var lateZb = D.zb.filter(function(x){ return (num(x.fbt) || 0) >= 140000; });
-  var VO = { sneak: 0, doubt: 1, real: 2 };
-  tails.sort(function(p, q){
-    return VO[p.j.verdict] - VO[q.j.verdict] || q.j.bad - p.j.bad || (num(q.x.fund) || 0) - (num(p.x.fund) || 0);
-  });
+  /* 按 verdict 分组 → 拆成 3 个独立表格，避免单表滚动导致某一类被"藏"看不到 */
+  var groups = { real: [], doubt: [], sneak: [] };
+  tails.forEach(function(r){ groups[r.j.verdict].push(r); });
+  /* 组内排序：真回流按封单金额降序（最稳的排前）、存疑按坏维度数升序（最接近真回流排前）、偷袭按时间降序（最新偷袭排前） */
+  groups.real.sort(function(p, q){ return (num(q.x.fund) || 0) - (num(p.x.fund) || 0); });
+  groups.doubt.sort(function(p, q){ return p.j.bad - q.j.bad || (num(q.x.fund) || 0) - (num(p.x.fund) || 0); });
+  groups.sneak.sort(function(p, q){ return (num(q.x.fbt) || 0) - (num(p.x.fbt) || 0) || q.j.bad - p.j.bad; });
   var VBADGE = { sneak: '<span class="badge b-b">❌ 偷袭板</span>', doubt: '<span class="badge b-y">⚠️ 存疑观望</span>', real: '<span class="badge b-r">✅ 真回流</span>' };
-  h += '<div style="margin-top:10px"><b style="font-size:12.5px;color:#f0453a">窗口三｜14:00-14:30 尾盘预演：辨识偷袭板与真回流（全部涨停股五维核对，按风险降序）</b></div>' +
-    '<div class="concl c-blu" style="margin-top:6px"><b>辨识结果：</b>真回流 <b class="up">' + cnt.real + '</b> 只 · 存疑观望 <b class="yel">' + cnt.doubt + '</b> 只 · 偷袭板警示 <b class="dn">' + cnt.sneak + '</b> 只' + (lateZb.length ? ' · <b class="dn">尾盘炸板（砸盘/偷袭失败）' + lateZb.length + ' 只</b>' : '') + '。<b>尾盘低吸条件（全部满足才做）：</b>板块≥B级 + 真回流特征 + 个股回踩均价线企稳 → 14:20-14:50 小仓低吸（≤10%）；14:45 后的直线拉板一律按偷袭处理，不参与，次日开盘规避。</div>' +
-    (tails.length ? '<div class="twrap" style="margin-top:6px;max-height:380px;overflow-y:auto"><table class="mini-tbl"><thead><tr><th>辨识</th><th>名称</th><th>代码</th><th>板块</th><th>连板</th><th>封板时间</th><th>封单(亿)</th><th>炸板</th><th>板块涨停</th><th>特征标记</th></tr></thead><tbody>' +
-    tails.map(function(r){
-      var x = r.x;
-      return '<tr><td>' + VBADGE[r.j.verdict] + '</td><td><b>' + esc(x.n) + '</b></td><td class="mono">' + esc(x.c) + '</td><td class="yel">' + esc(x.hybk || '其他') + '</td>' +
-        '<td class="mono">' + (x.lbc || 1) + '</td><td class="mono">' + fmtFbt(x.fbt) + '</td>' +
-        '<td class="mono">' + ((num(x.fund) || 0) / 1e8).toFixed(2) + '</td><td class="mono">' + (x.zbc || 0) + '</td>' +
-        '<td class="mono">' + r.secCnt + '</td><td class="lgc">' + (r.j.marks.length ? r.j.marks.join('；') : '五维全部健康') + '</td></tr>';
-    }).join('') + '</tbody></table></div>' : '') +
+  /* 单只渲染的单元格（共用） */
+  function rowCells(r){
+    var x = r.x;
+    return '<tr><td>' + VBADGE[r.j.verdict] + '</td><td><b>' + esc(x.n) + '</b></td><td class="mono">' + esc(x.c) + '</td><td class="yel">' + esc(x.hybk || '其他') + '</td>' +
+      '<td class="mono">' + (x.lbc || 1) + '</td><td class="mono">' + fmtFbt(x.fbt) + '</td>' +
+      '<td class="mono">' + ((num(x.fund) || 0) / 1e8).toFixed(2) + '</td><td class="mono">' + (x.zbc || 0) + '</td>' +
+      '<td class="mono">' + r.secCnt + '</td><td class="lgc">' + (r.j.marks.length ? r.j.marks.join('；') : '五维全部健康') + '</td></tr>';
+  }
+  /* 单组渲染：标题 + 表格（无 max-height 让所有股票可见，组内多则滚动） */
+  function groupBlock(key, label, cls, tip){
+    var rows = groups[key];
+    return '<div class="kpi" style="margin-top:6px;border-left:3px solid ' + cls + '"><div class="t">' + label +
+      ' <span class="badge ' + (key === 'real' ? 'b-r' : (key === 'doubt' ? 'b-y' : 'b-b')) + '">' + rows.length + ' 只</span>' +
+      ' <span class="note" style="margin-left:4px">' + tip + '</span></div>' +
+      (rows.length ? '<div class="twrap" style="margin-top:4px;max-height:280px;overflow-y:auto"><table class="mini-tbl"><thead><tr><th>辨识</th><th>名称</th><th>代码</th><th>板块</th><th>连板</th><th>封板时间</th><th>封单(亿)</th><th>炸板</th><th>板块涨停</th><th>特征标记</th></tr></thead><tbody>' +
+      rows.map(rowCells).join('') + '</tbody></table></div>' :
+      '<div class="note" style="margin-top:4px">（当前无此类个股）</div>') + '</div>';
+  }
+  /* 按"可操作价值降序"：真回流（可低吸）→ 存疑观望 → 偷袭板（不碰） */
+  h += '<div style="margin-top:10px"><b style="font-size:12.5px;color:#f0453a">窗口三｜14:00-14:30 尾盘预演：辨识偷袭板与真回流（按可操作价值分列 · 全部涨停股五维核对）</b></div>' +
+    '<div class="concl c-blu" style="margin-top:6px"><b>辨识结果：</b>真回流 <b class="up">' + cnt.real + '</b> 只 · 存疑观望 <b class="yel">' + cnt.doubt + '</b> 只 · 偷袭板警示 <b class="dn">' + cnt.sneak + '</b> 只' + (lateZb.length ? ' · <b class="dn">尾盘炸板（砸盘/偷袭失败）' + lateZb.length + ' 只</b>' : '') + '。<b>操作纪律：</b>①真回流（板块≥B级 + 回踩均价线企稳）→ 14:20-14:50 小仓低吸（≤10%）；②存疑观望 → 不参与，等次日开盘验证；③偷袭板 → 一律不碰，次日开盘规避。14:45 后的直线拉板默认按偷袭处理。</div>' +
+    groupBlock('real', '✅ 真回流（可跟 · 14:20-14:50 小仓低吸）', '#e44', '五维全部健康：14:00 前启动 + 放量持续 + 板块联动 + 封板质量好 + 全天强势') +
+    groupBlock('doubt', '⚠️ 存疑观望（不参与 · 等次日验证）', '#f5b300', '部分维度健康、部分待确认，次日开盘看资金承接再定') +
+    groupBlock('sneak', '❌ 偷袭板（不碰 · 次日开盘规避）', '#f0453a', '特征命中≥3项：14:45 后突袭 / 封单薄 / 孤立拉升 / 反复炸板') +
     (lateZb.length ? '<div class="kpi" style="margin-top:6px"><div class="t">尾盘炸板 / 砸盘警示（14:00 后尝试封板失败）</div><div class="twrap" style="margin-top:4px"><table class="mini-tbl"><tbody>' +
       lateZb.map(function(x){
         return '<tr><td><b>' + esc(x.n) + '</b></td><td class="mono">' + esc(x.c) + '</td><td class="yel">' + esc(x.hybk || '其他') + '</td><td class="mono">' + fmtFbt(x.fbt) + '</td><td class="dn">尾盘封板失败 · 资金避险信号，次日方向偏弱，降低隔夜仓位</td></tr>';
